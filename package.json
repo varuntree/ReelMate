@@ -9,6 +9,7 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@aws-sdk/client-polly": "^3.721.0",
     "@google/generative-ai": "^0.21.0",
     "axios": "^1.7.9",
     "next": "15.1.3",

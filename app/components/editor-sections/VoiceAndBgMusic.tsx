@@ -1,8 +1,12 @@
 // Component for managing voice generation and background music settings
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { type ReelState } from '../../page';
+import VoiceSelector from './VoiceSelector';
+import { Engine } from '@aws-sdk/client-polly';
+import { MUSIC_CATEGORIES, searchFreesoundMusic, type FreesoundTrack } from '@/app/api/services/freesoundService';
+import { FaPlay, FaPause, FaMusic } from 'react-icons/fa';
 
 interface VoiceAndBgMusicProps {
   reelState: ReelState;
@@ -13,111 +17,187 @@ export default function VoiceAndBgMusic({
   reelState,
   setReelState,
 }: VoiceAndBgMusicProps) {
-  const [isGenerating, setIsGenerating] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [musicResults, setMusicResults] = useState<FreesoundTrack[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [previewAudio, setPreviewAudio] = useState<HTMLAudioElement | null>(null);
+  const [playingMusicId, setPlayingMusicId] = useState<number | null>(null);
 
-  // Placeholder for voice generation
-  const handleGenerateVoice = async () => {
-    setIsGenerating(true);
-    // TODO: Implement text-to-speech generation
-    setIsGenerating(false);
-  };
-
-  // Handle voice settings changes
-  const handleVoiceSettingChange = (
-    setting: keyof ReelState['voiceSettings'],
-    value: number | string
-  ) => {
+  const handleVoiceChange = (voiceId: string) => {
     setReelState((prev) => ({
       ...prev,
       voiceSettings: {
         ...prev.voiceSettings,
-        [setting]: value,
+        voiceId,
       },
+    }));
+
+    // Regenerate all clip audios with new voice
+    reelState.clips.forEach((clip, index) => {
+      if (clip.text) {
+        generateVoiceForClip(index, clip.text);
+      }
+    });
+  };
+
+  const generateVoiceForClip = async (index: number, text: string) => {
+    try {
+      const response = await fetch('/api/voice/generate', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          text,
+          voiceSettings: { voiceId: reelState.voiceSettings.voiceId },
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to generate voice');
+      }
+
+      const { audioBase64 } = await response.json();
+      const audioUrl = `data:audio/mp3;base64,${audioBase64}`;
+
+      setReelState((prev) => ({
+        ...prev,
+        clips: prev.clips.map((clip, i) =>
+          i === index ? { ...clip, voiceAudio: audioUrl } : clip
+        ),
+      }));
+    } catch (error) {
+      console.error('Voice generation error:', error);
+    }
+  };
+
+  const handleCategorySelect = async (categoryId: string) => {
+    setSelectedCategory(categoryId);
+    setIsLoading(true);
+
+    try {
+      const category = MUSIC_CATEGORIES.find(c => c.id === categoryId);
+      if (!category) return;
+
+      const response = await searchFreesoundMusic(category.keywords);
+      setMusicResults(response.results);
+    } catch (error) {
+      console.error('Failed to fetch music:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const toggleMusicPreview = (music: FreesoundTrack) => {
+    if (previewAudio) {
+      previewAudio.pause();
+      if (playingMusicId === music.id) {
+        setPlayingMusicId(null);
+        return;
+      }
+    }
+
+    const audio = new Audio(music.previews['preview-hq-mp3']);
+    audio.addEventListener('ended', () => setPlayingMusicId(null));
+    setPreviewAudio(audio);
+    setPlayingMusicId(music.id);
+    audio.play();
+  };
+
+  const selectBackgroundMusic = (music: FreesoundTrack) => {
+    setReelState(prev => ({
+      ...prev,
+      bgMusic: music.previews['preview-hq-mp3'],
     }));
   };
 
+  // Cleanup audio on unmount
+  useEffect(() => {
+    return () => {
+      if (previewAudio) {
+        previewAudio.pause();
+        previewAudio.currentTime = 0;
+      }
+    };
+  }, [previewAudio]);
+
   return (
     <section className="rounded-lg bg-gray-800 p-6">
-      <h2 className="mb-4 text-xl font-bold text-white">Voice & Music</h2>
+      <h2 className="mb-4 text-xl font-bold text-white">Voice & Background Music</h2>
 
       {/* Voice Settings */}
       <div className="mb-6">
-        <h3 className="mb-3 text-lg font-medium text-gray-300">Voice Settings</h3>
-        
-        {/* Voice Selection */}
-        <div className="mb-4">
-          <label className="mb-2 block text-sm font-medium text-gray-300">
-            Voice Style
-          </label>
-          <select
-            value={reelState.voiceSettings.voice}
-            onChange={(e) => handleVoiceSettingChange('voice', e.target.value)}
-            className="w-full rounded-lg border border-gray-600 bg-gray-700 p-2.5 text-white"
-          >
-            <option value="default">Default</option>
-            <option value="friendly">Friendly</option>
-            <option value="professional">Professional</option>
-            <option value="casual">Casual</option>
-          </select>
-        </div>
-
-        {/* Voice Speed */}
-        <div className="mb-4">
-          <label className="mb-2 block text-sm font-medium text-gray-300">
-            Speed: {reelState.voiceSettings.speed}x
-          </label>
-          <input
-            type="range"
-            min="0.5"
-            max="2"
-            step="0.1"
-            value={reelState.voiceSettings.speed}
-            onChange={(e) =>
-              handleVoiceSettingChange('speed', parseFloat(e.target.value))
-            }
-            className="w-full"
-          />
-        </div>
-
-        {/* Voice Pitch */}
-        <div className="mb-4">
-          <label className="mb-2 block text-sm font-medium text-gray-300">
-            Pitch: {reelState.voiceSettings.pitch}
-          </label>
-          <input
-            type="range"
-            min="0.5"
-            max="2"
-            step="0.1"
-            value={reelState.voiceSettings.pitch}
-            onChange={(e) =>
-              handleVoiceSettingChange('pitch', parseFloat(e.target.value))
-            }
-            className="w-full"
-          />
-        </div>
-
-        {/* Generate Voice Button */}
-        <button
-          onClick={handleGenerateVoice}
-          disabled={isGenerating || !reelState.script}
-          className="w-full rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700 disabled:opacity-50"
-        >
-          {isGenerating ? 'Generating Voice...' : 'Generate Voice'}
-        </button>
+        <h3 className="mb-4 text-lg font-semibold text-white">Voice Settings</h3>
+        <VoiceSelector
+          selectedVoiceId={reelState.voiceSettings.voiceId}
+          selectedEngine="standard"
+          onVoiceChange={handleVoiceChange}
+          sampleText={reelState.clips[0]?.text || "Hello! This is a sample voice preview."}
+        />
       </div>
 
       {/* Background Music */}
       <div>
-        <h3 className="mb-3 text-lg font-medium text-gray-300">
-          Background Music
-        </h3>
-        <div className="rounded-lg border border-gray-600 bg-gray-700 p-4">
-          <p className="text-center text-gray-400">
-            Background music selection coming soon...
-          </p>
-          {/* TODO: Add background music selection component */}
+        <h3 className="mb-4 text-lg font-semibold text-white">Background Music</h3>
+        
+        {/* Music Categories */}
+        <div className="mb-4 grid grid-cols-2 gap-2 sm:grid-cols-3">
+          {MUSIC_CATEGORIES.map((category) => (
+            <button
+              key={category.id}
+              onClick={() => handleCategorySelect(category.id)}
+              className={`flex items-center justify-center gap-2 rounded-lg border p-3 ${
+                selectedCategory === category.id
+                  ? 'border-blue-500 bg-blue-500/20 text-white'
+                  : 'border-gray-600 bg-gray-700 text-gray-300 hover:border-blue-500/50'
+              }`}
+            >
+              <FaMusic className="text-lg" />
+              <span>{category.label}</span>
+            </button>
+          ))}
         </div>
+
+        {/* Music Results */}
+        {isLoading ? (
+          <div className="text-center text-gray-400">Loading music...</div>
+        ) : (
+          <div className="space-y-2">
+            {musicResults.map((music) => (
+              <div
+                key={music.id}
+                className={`flex items-center justify-between rounded-lg border border-gray-600 bg-gray-700 p-3 ${
+                  reelState.bgMusic === music.previews['preview-hq-mp3'] ? 'border-blue-500' : ''
+                }`}
+              >
+                <div className="flex-1">
+                  <div className="font-medium text-white">{music.name}</div>
+                  <div className="text-sm text-gray-400">
+                    By {music.username} • {Math.round(music.duration)}s
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => toggleMusicPreview(music)}
+                    className="rounded-full bg-gray-600 p-2 text-white hover:bg-gray-500"
+                  >
+                    {playingMusicId === music.id ? <FaPause /> : <FaPlay />}
+                  </button>
+                  <button
+                    onClick={() => selectBackgroundMusic(music)}
+                    className={`rounded-lg px-3 py-1 ${
+                      reelState.bgMusic === music.previews['preview-hq-mp3']
+                        ? 'bg-blue-500 text-white'
+                        : 'bg-gray-600 text-gray-300 hover:bg-gray-500'
+                    }`}
+                  >
+                    {reelState.bgMusic === music.previews['preview-hq-mp3'] ? 'Selected' : 'Select'}
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </section>
   );

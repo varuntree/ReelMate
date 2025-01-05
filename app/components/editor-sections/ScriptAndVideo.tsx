@@ -5,7 +5,7 @@ import { useState } from 'react';
 import { type ReelState } from '../../page';
 import { type GenerateReelContentResponse, type ReelTheme, type TextClip } from "@/app/types/api";
 import { searchPixabayVideos, type PixabayVideo } from '@/app/api/services/pixabayService';
-import { FaVideo, FaSearch } from 'react-icons/fa';
+import { FaVideo, FaSearch, FaPlay, FaPause } from 'react-icons/fa';
 
 interface ScriptAndVideoProps {
   reelState: ReelState;
@@ -119,6 +119,8 @@ export default function ScriptAndVideo({
   const [error, setError] = useState<string | null>(null);
   const [selectedClipIndex, setSelectedClipIndex] = useState<number | null>(null);
   const [isVideoModalOpen, setIsVideoModalOpen] = useState(false);
+  const [playingAudioIndex, setPlayingAudioIndex] = useState<number | null>(null);
+  const [audioElements, setAudioElements] = useState<{ [key: number]: HTMLAudioElement | null }>({});
 
   const handleGenerateScript = async () => {
     setIsLoading(true);
@@ -174,13 +176,74 @@ export default function ScriptAndVideo({
     }));
   };
 
-  const handleClipTextChange = (index: number, newText: string) => {
+  const generateVoiceForClip = async (index: number, text: string) => {
+    try {
+      const response = await fetch('/api/voice/generate', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          text,
+          voiceSettings: reelState.voiceSettings,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to generate voice');
+      }
+
+      const { audioBase64 } = await response.json();
+      const audioUrl = `data:audio/mp3;base64,${audioBase64}`;
+
+      setReelState((prev) => ({
+        ...prev,
+        clips: prev.clips.map((clip, i) =>
+          i === index ? { ...clip, voiceAudio: audioUrl } : clip
+        ),
+      }));
+
+      // Create and store audio element
+      const audio = new Audio(audioUrl);
+      audio.addEventListener('ended', () => setPlayingAudioIndex(null));
+      setAudioElements((prev) => ({ ...prev, [index]: audio }));
+    } catch (error) {
+      console.error('Voice generation error:', error);
+    }
+  };
+
+  const handleClipTextChange = async (index: number, newText: string) => {
     setReelState((prev) => ({
       ...prev,
       clips: prev.clips.map((clip, i) =>
         i === index ? { ...clip, text: newText } : clip
       ),
     }));
+
+    // Generate new voice audio after a delay
+    const timeoutId = setTimeout(() => {
+      generateVoiceForClip(index, newText);
+    }, 1000);
+
+    return () => clearTimeout(timeoutId);
+  };
+
+  const toggleAudioPlayback = (index: number) => {
+    const audio = audioElements[index];
+    if (!audio) return;
+
+    if (playingAudioIndex === index) {
+      audio.pause();
+      setPlayingAudioIndex(null);
+    } else {
+      // Stop any currently playing audio
+      if (playingAudioIndex !== null && audioElements[playingAudioIndex]) {
+        audioElements[playingAudioIndex]?.pause();
+      }
+      audio.currentTime = 0;
+      audio.play();
+      setPlayingAudioIndex(index);
+    }
   };
 
   return (
@@ -238,6 +301,20 @@ export default function ScriptAndVideo({
           >
             {/* Text Area */}
             <div className="flex-1">
+              <div className="mb-2 flex items-center justify-between">
+                <label className="text-sm font-medium text-gray-300">
+                  Clip {index + 1}
+                </label>
+                {clip.voiceAudio && (
+                  <button
+                    onClick={() => toggleAudioPlayback(index)}
+                    className="flex items-center gap-2 rounded bg-blue-600 px-3 py-1 text-sm text-white hover:bg-blue-700"
+                  >
+                    {playingAudioIndex === index ? <FaPause /> : <FaPlay />}
+                    {playingAudioIndex === index ? 'Pause' : 'Play'}
+                  </button>
+                )}
+              </div>
               <textarea
                 value={clip.text}
                 onChange={(e) => handleClipTextChange(index, e.target.value)}

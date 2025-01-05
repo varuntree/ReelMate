@@ -5,6 +5,7 @@ import { useState } from 'react';
 import PromptPage from './components/PromptPage';
 import MainEditorPage from './components/MainEditorPage';
 import { type ReelTheme } from './types/api';
+import { Engine } from '@aws-sdk/client-polly';
 
 // Define the main reel state interface
 export interface ReelState {
@@ -12,9 +13,8 @@ export interface ReelState {
   selectedVideo: string | null;
   script: string;
   voiceSettings: {
-    voice: string;
-    pitch: number;
-    speed: number;
+    voiceId: string;
+    engine: Engine;
   };
   bgMusic: string | null;
   bgMusicKeywords?: string[]; // Keywords for background music search
@@ -53,9 +53,8 @@ export default function Home() {
     selectedVideo: null,
     script: '',
     voiceSettings: {
-      voice: 'default',
-      pitch: 1,
-      speed: 1,
+      voiceId: 'Joanna',
+      engine: 'neural',
     },
     bgMusic: null,
     overlayText: [],
