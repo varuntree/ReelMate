@@ -4,6 +4,7 @@
 import { useState } from 'react';
 import PromptPage from './components/PromptPage';
 import MainEditorPage from './components/MainEditorPage';
+import { type ReelTheme } from './types/api';
 
 // Define the main reel state interface
 export interface ReelState {
@@ -16,6 +17,19 @@ export interface ReelState {
     speed: number;
   };
   bgMusic: string | null;
+  bgMusicKeywords?: string[]; // Keywords for background music search
+  style?: {
+    tone: string;
+    pacing: 'slow' | 'medium' | 'fast';
+  };
+  clips: Array<{
+    text: string;
+    duration: number;
+    videoKeywords: string[];
+    selectedVideo?: string;
+    voiceAudio?: string;
+    videoUrl?: string; // URL of the selected Pixabay video
+  }>;
   overlayText: Array<{
     id: string;
     text: string;
@@ -45,6 +59,7 @@ export default function Home() {
     },
     bgMusic: null,
     overlayText: [],
+    clips: [],
   });
 
   // Handle the initial prompt submission
