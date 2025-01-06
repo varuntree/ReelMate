@@ -4,7 +4,7 @@
 import { useState } from 'react';
 import PromptPage from './components/PromptPage';
 import MainEditorPage from './components/MainEditorPage';
-import { type ReelTheme } from './types/api';
+import { type ReelTheme, type TextClip } from './types/api';
 import { Engine } from '@aws-sdk/client-polly';
 
 // Define the main reel state interface
@@ -22,14 +22,7 @@ export interface ReelState {
     tone: string;
     pacing: 'slow' | 'medium' | 'fast';
   };
-  clips: Array<{
-    text: string;
-    duration: number;
-    videoKeywords: string[];
-    selectedVideo?: string;
-    voiceAudio?: string;
-    videoUrl?: string; // URL of the selected Pixabay video
-  }>;
+  clips: TextClip[];
   overlayText: Array<{
     id: string;
     text: string;

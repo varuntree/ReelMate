@@ -1,7 +1,7 @@
 // Component for displaying the live preview of the reel
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { type ReelState } from '../page';
 
 interface VideoPreviewProps {
@@ -11,13 +11,14 @@ interface VideoPreviewProps {
 export default function VideoPreview({ reelState }: VideoPreviewProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
+  const [currentClipIndex, setCurrentClipIndex] = useState(0);
 
-  // Update video source when selected video changes
+  // Update video source when current clip changes
   useEffect(() => {
-    if (videoRef.current && reelState.selectedVideo) {
-      videoRef.current.src = reelState.selectedVideo;
+    if (videoRef.current && reelState.clips[currentClipIndex]?.video) {
+      videoRef.current.src = reelState.clips[currentClipIndex].video!.url;
     }
-  }, [reelState.selectedVideo]);
+  }, [currentClipIndex, reelState.clips]);
 
   return (
     <div className="h-full w-full">
@@ -34,14 +35,14 @@ export default function VideoPreview({ reelState }: VideoPreviewProps) {
         className="relative aspect-[9/16] w-full overflow-hidden rounded-lg bg-black"
       >
         {/* Video Element */}
-        {reelState.selectedVideo ? (
+        {reelState.clips[currentClipIndex]?.video ? (
           <video
             ref={videoRef}
             className="h-full w-full object-contain"
             controls
             loop
           >
-            <source src={reelState.selectedVideo} type="video/mp4" />
+            <source src={reelState.clips[currentClipIndex].video!.url} type="video/mp4" />
             Your browser does not support the video tag.
           </video>
         ) : (
@@ -88,8 +89,27 @@ export default function VideoPreview({ reelState }: VideoPreviewProps) {
       {/* Preview Controls */}
       <div className="mt-4 space-y-2">
         <div className="flex items-center justify-between text-sm text-gray-400">
-          <span>Duration: --:--</span>
+          <span>
+            Clip {currentClipIndex + 1} of {reelState.clips.length}
+          </span>
           <span>Size: 9:16</span>
+        </div>
+        {/* Clip Navigation */}
+        <div className="flex justify-center gap-2">
+          <button
+            onClick={() => setCurrentClipIndex((prev) => Math.max(0, prev - 1))}
+            disabled={currentClipIndex === 0}
+            className="rounded bg-gray-700 px-3 py-1 text-white hover:bg-gray-600 disabled:opacity-50"
+          >
+            Previous
+          </button>
+          <button
+            onClick={() => setCurrentClipIndex((prev) => Math.min(reelState.clips.length - 1, prev + 1))}
+            disabled={currentClipIndex === reelState.clips.length - 1}
+            className="rounded bg-gray-700 px-3 py-1 text-white hover:bg-gray-600 disabled:opacity-50"
+          >
+            Next
+          </button>
         </div>
       </div>
     </div>

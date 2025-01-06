@@ -1,15 +1,16 @@
 // Component for managing script generation and video selection
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { type ReelState } from '../../page';
 import { type GenerateReelContentResponse, type ReelTheme, type TextClip } from "@/app/types/api";
-import { searchPixabayVideos, type PixabayVideo } from '@/app/api/services/pixabayService';
+import { searchPexelsVideos, type PexelsVideo } from '@/app/api/services/pexelsService';
 import { FaVideo, FaSearch, FaPlay, FaPause } from 'react-icons/fa';
 
 interface ScriptAndVideoProps {
   reelState: ReelState;
   setReelState: React.Dispatch<React.SetStateAction<ReelState>>;
+  onVideoSelect: (video: PexelsVideo) => void;
 }
 
 const THEMES: { value: ReelTheme; label: string }[] = [
@@ -31,19 +32,19 @@ interface VideoSearchModalProps {
   isOpen: boolean;
   onClose: () => void;
   keywords: string[];
-  onVideoSelect: (video: PixabayVideo) => void;
+  onVideoSelect: (video: PexelsVideo) => void;
 }
 
 function VideoSearchModal({ isOpen, onClose, keywords, onVideoSelect }: VideoSearchModalProps) {
   const [searchQuery, setSearchQuery] = useState(keywords.join(' '));
-  const [videos, setVideos] = useState<PixabayVideo[]>([]);
+  const [videos, setVideos] = useState<PexelsVideo[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
   const handleSearch = async () => {
     setIsLoading(true);
     try {
-      const response = await searchPixabayVideos(searchQuery);
-      setVideos(response.hits);
+      const response = await searchPexelsVideos(searchQuery);
+      setVideos(response.videos);
     } catch (error) {
       console.error('Failed to search videos:', error);
     } finally {
@@ -79,21 +80,23 @@ function VideoSearchModal({ isOpen, onClose, keywords, onVideoSelect }: VideoSea
             videos.map((video) => (
               <div
                 key={video.id}
-                className="cursor-pointer rounded-lg border border-gray-600 p-2 hover:border-blue-500"
+                className="relative cursor-pointer group"
                 onClick={() => {
                   onVideoSelect(video);
                   onClose();
                 }}
               >
-                <video
-                  src={video.videos.tiny.url}
-                  className="h-32 w-full object-cover"
-                  loop
-                  muted
-                  onMouseOver={(e) => e.currentTarget.play()}
-                  onMouseOut={(e) => e.currentTarget.pause()}
+                <img
+                  src={video.image}
+                  alt={`Video thumbnail`}
+                  className="w-full h-48 object-cover rounded-lg"
                 />
-                <p className="mt-2 text-sm text-gray-300">{video.tags}</p>
+                <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-50 transition-all duration-200 flex items-center justify-center">
+                  <FaPlay className="text-white text-2xl opacity-0 group-hover:opacity-100 transition-all duration-200" />
+                </div>
+                <div className="absolute bottom-2 right-2 bg-black bg-opacity-50 text-white text-xs px-2 py-1 rounded">
+                  {Math.round(video.duration)}s
+                </div>
               </div>
             ))
           )}
@@ -113,67 +116,34 @@ function VideoSearchModal({ isOpen, onClose, keywords, onVideoSelect }: VideoSea
 export default function ScriptAndVideo({
   reelState,
   setReelState,
+  onVideoSelect,
 }: ScriptAndVideoProps) {
-  const [isLoading, setIsLoading] = useState(false);
-  const [selectedTheme, setSelectedTheme] = useState<ReelTheme>('custom');
-  const [error, setError] = useState<string | null>(null);
   const [selectedClipIndex, setSelectedClipIndex] = useState<number | null>(null);
   const [isVideoModalOpen, setIsVideoModalOpen] = useState(false);
   const [playingAudioIndex, setPlayingAudioIndex] = useState<number | null>(null);
   const [audioElements, setAudioElements] = useState<{ [key: number]: HTMLAudioElement | null }>({});
 
-  const handleGenerateScript = async () => {
-    setIsLoading(true);
-    setError(null);
-
-    try {
-      const response = await fetch('/api/reel/generate', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          prompt: reelState.prompt,
-          theme: selectedTheme === 'custom' ? undefined : selectedTheme,
-          numberOfClips: 5,
-        }),
-      });
-
-      const data = (await response.json()) as GenerateReelContentResponse;
-
-      if (data.error) {
-        setError(data.error);
-        return;
+  // Load content from localStorage on mount
+  useEffect(() => {
+    const savedContent = localStorage.getItem('reelContent');
+    if (savedContent) {
+      try {
+        const content = JSON.parse(savedContent);
+        setReelState((prev) => ({
+          ...prev,
+          clips: content.clips,
+          style: content.style,
+          bgMusicKeywords: content.bgMusicKeywords,
+        }));
+      } catch (error) {
+        console.error('Failed to parse saved content:', error);
       }
-
-      setReelState((prev) => ({
-        ...prev,
-        clips: data.content.clips.map((clip) => ({
-          ...clip,
-          videoUrl: '', // Initialize with empty video URL
-        })),
-        style: data.content.style,
-        bgMusicKeywords: data.content.bgMusicKeywords,
-      }));
-    } catch (err) {
-      setError('Failed to generate content. Please try again.');
-      console.error('Script generation error:', err);
-    } finally {
-      setIsLoading(false);
     }
-  };
+  }, []);
 
-  const handleVideoSelect = (video: PixabayVideo) => {
+  const handleVideoSelect = (video: PexelsVideo) => {
     if (selectedClipIndex === null) return;
-
-    setReelState((prev) => ({
-      ...prev,
-      clips: prev.clips.map((clip, index) =>
-        index === selectedClipIndex
-          ? { ...clip, videoUrl: video.videos.large.url }
-          : clip
-      ),
-    }));
+    onVideoSelect(video);
   };
 
   const generateVoiceForClip = async (index: number, text: string) => {
@@ -248,110 +218,51 @@ export default function ScriptAndVideo({
 
   return (
     <section className="rounded-lg bg-gray-800 p-6">
-      <h2 className="mb-4 text-xl font-bold text-white">Script & Video</h2>
+      <h2 className="mb-4 text-xl font-bold text-white">Script and Video</h2>
       
-      {/* Prompt Display */}
-      <div className="mb-4">
-        <label className="mb-2 block text-sm font-medium text-gray-300">
-          Your Prompt
-        </label>
-        <div className="rounded-lg bg-gray-700 p-3 text-gray-300">
-          {reelState.prompt}
-        </div>
-      </div>
-
-      {/* Theme Selection */}
-      <div className="mb-4">
-        <label className="mb-2 block text-sm font-medium text-gray-300">
-          Reel Theme
-        </label>
-        <select
-          value={selectedTheme}
-          onChange={(e) => setSelectedTheme(e.target.value as ReelTheme)}
-          className="w-full rounded-lg border border-gray-600 bg-gray-700 p-2.5 text-white"
-        >
-          {THEMES.map((theme) => (
-            <option key={theme.value} value={theme.value}>
-              {theme.label}
-            </option>
-          ))}
-        </select>
-      </div>
-
-      {/* Generate Button */}
-      <div className="mb-4">
-        <button
-          onClick={handleGenerateScript}
-          disabled={isLoading}
-          className="w-full rounded bg-blue-600 py-2 text-white hover:bg-blue-700 disabled:opacity-50"
-        >
-          {isLoading ? 'Generating...' : 'Generate Script & Video Keywords'}
-        </button>
-        {error && (
-          <p className="mt-2 text-sm text-red-400">{error}</p>
-        )}
-      </div>
-
-      {/* Clips Section */}
+      {/* Clip List */}
       <div className="space-y-4">
-        {reelState.clips?.map((clip, index) => (
+        {reelState.clips.map((clip, index) => (
           <div
             key={index}
-            className="flex gap-4 rounded-lg border border-gray-600 bg-gray-700 p-4"
+            className="rounded-lg border border-gray-700 bg-gray-900 p-4"
           >
-            {/* Text Area */}
-            <div className="flex-1">
-              <div className="mb-2 flex items-center justify-between">
-                <label className="text-sm font-medium text-gray-300">
-                  Clip {index + 1}
-                </label>
-                {clip.voiceAudio && (
-                  <button
-                    onClick={() => toggleAudioPlayback(index)}
-                    className="flex items-center gap-2 rounded bg-blue-600 px-3 py-1 text-sm text-white hover:bg-blue-700"
-                  >
-                    {playingAudioIndex === index ? <FaPause /> : <FaPlay />}
-                    {playingAudioIndex === index ? 'Pause' : 'Play'}
-                  </button>
-                )}
-              </div>
-              <textarea
-                value={clip.text}
-                onChange={(e) => handleClipTextChange(index, e.target.value)}
-                className="w-full rounded-lg border border-gray-600 bg-gray-700 p-3 text-white"
-                rows={3}
-                placeholder="Clip text..."
-              />
-              <div className="mt-2 text-sm text-gray-400">
-                Keywords: {clip.videoKeywords.join(', ')}
-              </div>
-            </div>
-
-            {/* Video Selection */}
-            <div className="flex w-32 flex-col items-center justify-center">
-              {clip.videoUrl ? (
-                <video
-                  src={clip.videoUrl}
-                  className="h-24 w-full cursor-pointer rounded object-cover"
-                  loop
-                  muted
-                  onClick={() => {
-                    setSelectedClipIndex(index);
-                    setIsVideoModalOpen(true);
-                  }}
-                  onMouseOver={(e) => e.currentTarget.play()}
-                  onMouseOut={(e) => e.currentTarget.pause()}
-                />
-              ) : (
+            <div className="mb-2 flex items-center gap-2">
+              <span className="text-sm font-medium text-gray-400">
+                Clip {index + 1}
+              </span>
+              {clip.voiceAudio && (
                 <button
-                  onClick={() => {
-                    setSelectedClipIndex(index);
-                    setIsVideoModalOpen(true);
-                  }}
-                  className="flex h-24 w-full items-center justify-center rounded border-2 border-dashed border-gray-500 text-gray-400 hover:border-blue-500 hover:text-blue-500"
+                  onClick={() => toggleAudioPlayback(index)}
+                  className="rounded bg-gray-700 p-1 text-white hover:bg-gray-600"
                 >
-                  <FaVideo size={24} />
+                  {playingAudioIndex === index ? <FaPause /> : <FaPlay />}
                 </button>
+              )}
+            </div>
+            
+            <textarea
+              value={clip.text}
+              onChange={(e) => handleClipTextChange(index, e.target.value)}
+              className="mb-2 w-full rounded border border-gray-700 bg-gray-800 p-2 text-white"
+              rows={2}
+            />
+            
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => {
+                  setSelectedClipIndex(index);
+                  setIsVideoModalOpen(true);
+                }}
+                className="flex items-center gap-1 rounded bg-blue-600 px-3 py-1 text-sm text-white hover:bg-blue-700"
+              >
+                <FaVideo className="text-xs" />
+                {clip.video ? 'Change Video' : 'Select Video'}
+              </button>
+              {clip.video && (
+                <span className="text-sm text-gray-400">
+                  Video ID: {clip.video.id}
+                </span>
               )}
             </div>
           </div>
@@ -359,13 +270,10 @@ export default function ScriptAndVideo({
       </div>
 
       {/* Video Search Modal */}
-      {selectedClipIndex !== null && reelState.clips[selectedClipIndex] && (
+      {selectedClipIndex !== null && (
         <VideoSearchModal
           isOpen={isVideoModalOpen}
-          onClose={() => {
-            setIsVideoModalOpen(false);
-            setSelectedClipIndex(null);
-          }}
+          onClose={() => setIsVideoModalOpen(false)}
           keywords={reelState.clips[selectedClipIndex].videoKeywords}
           onVideoSelect={handleVideoSelect}
         />

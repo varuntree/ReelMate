@@ -1,38 +1,39 @@
 'use client';
 
 import { useState } from 'react';
-import { AVAILABLE_VOICES } from '@/app/api/services/pollyService';
 import { Engine } from '@aws-sdk/client-polly';
 import { FaPlay, FaPause } from 'react-icons/fa';
 
-interface VoiceSelectorProps {
-  selectedVoiceId: string;
-  selectedEngine: Engine;
-  onVoiceChange: (voiceId: string, engine: Engine) => void;
-  sampleText: string;
+interface VoiceSettings {
+  voiceId: string;
+  engine: Engine;
 }
 
+interface VoiceSelectorProps {
+  voiceSettings: VoiceSettings;
+  onVoiceChange: (settings: VoiceSettings) => void;
+}
+
+const VOICES = [
+  { id: 'Joey', name: 'Joey (Male)', engine: 'neural' as Engine },
+  { id: 'Matthew', name: 'Matthew (Male)', engine: 'neural' as Engine },
+  { id: 'Joanna', name: 'Joanna (Female)', engine: 'neural' as Engine },
+  { id: 'Kendra', name: 'Kendra (Female)', engine: 'neural' as Engine },
+  { id: 'Kimberly', name: 'Kimberly (Female)', engine: 'neural' as Engine },
+  { id: 'Salli', name: 'Salli (Female)', engine: 'neural' as Engine },
+  { id: 'Justin', name: 'Justin (Male)', engine: 'standard' as Engine },
+  { id: 'Kevin', name: 'Kevin (Male)', engine: 'standard' as Engine },
+];
+
 export default function VoiceSelector({
-  selectedVoiceId,
-  selectedEngine,
+  voiceSettings,
   onVoiceChange,
-  sampleText,
 }: VoiceSelectorProps) {
-  const [selectedAccent, setSelectedAccent] = useState<keyof typeof AVAILABLE_VOICES>("English (US)");
   const [previewAudio, setPreviewAudio] = useState<HTMLAudioElement | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
-  const [previewVoiceId, setPreviewVoiceId] = useState<string | null>(null);
+  const [previewText] = useState("Hello! This is a sample voice preview.");
 
-  const handleVoiceChange = async (voiceId: string) => {
-    const voice = AVAILABLE_VOICES[selectedAccent].find(v => v.id === voiceId);
-    if (!voice) return;
-
-    // Always use standard engine
-    await previewVoice(voiceId, "standard");
-    onVoiceChange(voiceId, "standard");
-  };
-
-  const previewVoice = async (voiceId: string, engine: Engine) => {
+  const generatePreview = async (voiceId: string, engine: Engine) => {
     try {
       const response = await fetch('/api/voice/generate', {
         method: 'POST',
@@ -40,7 +41,7 @@ export default function VoiceSelector({
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          text: sampleText,
+          text: previewText,
           voiceSettings: { voiceId, engine },
         }),
       });
@@ -50,101 +51,70 @@ export default function VoiceSelector({
       }
 
       const { audioBase64 } = await response.json();
-      const audioUrl = `data:audio/mp3;base64,${audioBase64}`;
-
-      // Stop any currently playing preview
-      if (previewAudio) {
-        previewAudio.pause();
-        previewAudio.currentTime = 0;
-      }
-
-      // Create and play new audio
-      const audio = new Audio(audioUrl);
-      audio.addEventListener('ended', () => {
-        setIsPlaying(false);
-        setPreviewVoiceId(null);
-      });
-      setPreviewAudio(audio);
-      setPreviewVoiceId(voiceId);
-      audio.play();
-      setIsPlaying(true);
+      return `data:audio/mp3;base64,${audioBase64}`;
     } catch (error) {
-      console.error('Voice preview error:', error);
+      console.error('Voice preview generation error:', error);
+      return null;
     }
   };
 
-  const togglePreview = (voiceId: string) => {
-    if (previewAudio && previewVoiceId === voiceId) {
-      if (isPlaying) {
-        previewAudio.pause();
-        setIsPlaying(false);
-      } else {
-        previewAudio.play();
-        setIsPlaying(true);
-      }
-    } else {
-      const voice = AVAILABLE_VOICES[selectedAccent].find(v => v.id === voiceId);
-      if (!voice) return;
-      previewVoice(voiceId, "standard");
+  const handlePreview = async (voiceId: string, engine: Engine) => {
+    if (previewAudio) {
+      previewAudio.pause();
+      setIsPlaying(false);
+      setPreviewAudio(null);
+      return;
     }
+
+    const audioUrl = await generatePreview(voiceId, engine);
+    if (!audioUrl) return;
+
+    const audio = new Audio(audioUrl);
+    audio.addEventListener('ended', () => {
+      setIsPlaying(false);
+      setPreviewAudio(null);
+    });
+
+    setPreviewAudio(audio);
+    setIsPlaying(true);
+    audio.play();
   };
 
   return (
     <div className="space-y-4">
-      <div>
-        <label className="mb-2 block text-sm font-medium text-gray-300">
-          Accent
-        </label>
-        <select
-          value={selectedAccent}
-          onChange={(e) => setSelectedAccent(e.target.value as keyof typeof AVAILABLE_VOICES)}
-          className="w-full rounded-lg border border-gray-600 bg-gray-700 p-2.5 text-white"
-        >
-          {Object.keys(AVAILABLE_VOICES).map((accent) => (
-            <option key={accent} value={accent}>
-              {accent}
-            </option>
-          ))}
-        </select>
-      </div>
-
-      <div>
-        <label className="mb-2 block text-sm font-medium text-gray-300">
-          Voice
-        </label>
-        <div className="grid grid-cols-2 gap-2">
-          {AVAILABLE_VOICES[selectedAccent].map((voice) => (
-            <div
-              key={voice.id}
-              className={`flex items-center justify-between rounded-lg border p-3 ${
-                selectedVoiceId === voice.id
-                  ? 'border-blue-500 bg-blue-500/20 text-white'
-                  : 'border-gray-600 bg-gray-700 text-gray-300 hover:border-blue-500/50'
-              }`}
-            >
+      <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4">
+        {VOICES.map((voice) => (
+          <div
+            key={voice.id}
+            className={`flex flex-col items-center rounded-lg border p-3 ${
+              voiceSettings.voiceId === voice.id
+                ? 'border-blue-500 bg-blue-500/20'
+                : 'border-gray-600 bg-gray-700 hover:border-blue-500/50'
+            }`}
+          >
+            <div className="mb-2 text-center text-sm font-medium text-white">
+              {voice.name}
+            </div>
+            <div className="flex gap-2">
               <button
-                onClick={() => handleVoiceChange(voice.id)}
-                className="flex-1 text-left"
+                onClick={() => handlePreview(voice.id, voice.engine)}
+                className="rounded bg-gray-600 p-2 text-white hover:bg-gray-500"
               >
-                <div className="font-medium">{voice.id}</div>
-                <div className="text-sm text-gray-400">{voice.gender}</div>
+                {isPlaying && previewAudio ? <FaPause /> : <FaPlay />}
               </button>
               <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  togglePreview(voice.id);
-                }}
-                className="ml-2 rounded-full bg-gray-600 p-2 hover:bg-gray-500"
+                onClick={() => onVoiceChange({ voiceId: voice.id, engine: voice.engine })}
+                className={`rounded px-3 py-1 ${
+                  voiceSettings.voiceId === voice.id
+                    ? 'bg-blue-500 text-white'
+                    : 'bg-gray-600 text-white hover:bg-gray-500'
+                }`}
               >
-                {isPlaying && previewVoiceId === voice.id ? (
-                  <FaPause size={12} />
-                ) : (
-                  <FaPlay size={12} />
-                )}
+                {voiceSettings.voiceId === voice.id ? 'Selected' : 'Select'}
               </button>
             </div>
-          ))}
-        </div>
+          </div>
+        ))}
       </div>
     </div>
   );

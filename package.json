@@ -11,11 +11,14 @@
   "dependencies": {
     "@aws-sdk/client-polly": "^3.721.0",
     "@google/generative-ai": "^0.21.0",
+    "@remotion/cli": "^4.0.245",
+    "@remotion/player": "^4.0.245",
     "axios": "^1.7.9",
     "next": "15.1.3",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
-    "react-icons": "^5.4.0"
+    "react-icons": "^5.4.0",
+    "remotion": "^4.0.245"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
