@@ -4,8 +4,8 @@
 import { type ReelState } from '../page';
 import ScriptAndVideo from './editor-sections/ScriptAndVideo';
 import VoiceAndBgMusic from './editor-sections/VoiceAndBgMusic';
-import TextAndLogo from './editor-sections/TextAndLogo';
-import VideoPreview from './VideoPreview';
+import CaptionsAndStyle from './editor-sections/CaptionsAndStyle';
+import RemotionPreview from './RemotionPreview';
 
 interface MainEditorPageProps {
   reelState: ReelState;
@@ -16,15 +16,27 @@ export default function MainEditorPage({
   reelState,
   setReelState,
 }: MainEditorPageProps) {
+  const handleVideoSelect = (video: any) => {
+    if (reelState.clips.length > 0) {
+      setReelState(prev => ({
+        ...prev,
+        clips: prev.clips.map((clip, i) => 
+          i === 0 ? { ...clip, video } : clip
+        ),
+      }));
+    }
+  };
+
   return (
-    <div className="flex h-screen bg-gray-900">
+    <div className="flex h-screen overflow-hidden bg-gray-900">
       {/* Left Pane - Editor Sections */}
-      <div className="w-1/2 overflow-y-auto border-r border-gray-700 p-4">
+      <div className="w-[60%] overflow-y-auto border-r border-gray-700 p-4">
         <div className="space-y-6">
           {/* Section 1: Script and Video */}
           <ScriptAndVideo
             reelState={reelState}
             setReelState={setReelState}
+            onVideoSelect={handleVideoSelect}
           />
 
           {/* Section 2: Voice and Background Music */}
@@ -33,8 +45,8 @@ export default function MainEditorPage({
             setReelState={setReelState}
           />
 
-          {/* Section 3: Text and Logo */}
-          <TextAndLogo
+          {/* Section 3: Captions and Style */}
+          <CaptionsAndStyle
             reelState={reelState}
             setReelState={setReelState}
           />
@@ -42,8 +54,10 @@ export default function MainEditorPage({
       </div>
 
       {/* Right Pane - Video Preview */}
-      <div className="w-1/2 bg-black p-4">
-        <VideoPreview reelState={reelState} />
+      <div className="w-[40%] overflow-y-auto bg-black p-4">
+        <div className="sticky top-4">
+          <RemotionPreview reelState={reelState} />
+        </div>
       </div>
     </div>
   );

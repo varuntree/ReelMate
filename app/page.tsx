@@ -37,6 +37,7 @@ export interface ReelState {
     url: string;
     position: { x: number; y: number };
   };
+  transition: 'fade' | 'slide' | 'zoom' | 'wipe' | 'dissolve' | 'blur';
 }
 
 export default function Home() {
@@ -52,6 +53,7 @@ export default function Home() {
     bgMusic: null,
     overlayText: [],
     clips: [],
+    transition: 'fade',
   });
 
   // Handle the initial prompt submission

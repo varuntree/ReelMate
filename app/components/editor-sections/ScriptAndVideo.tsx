@@ -123,6 +123,29 @@ export default function ScriptAndVideo({
   const [playingAudioIndex, setPlayingAudioIndex] = useState<number | null>(null);
   const [audioElements, setAudioElements] = useState<{ [key: number]: HTMLAudioElement | null }>({});
 
+  // Initialize audio elements when clips change
+  useEffect(() => {
+    reelState.clips.forEach((clip, index) => {
+      if (clip.voiceAudio && !audioElements[index]) {
+        const audio = new Audio(clip.voiceAudio);
+        audio.addEventListener('ended', () => setPlayingAudioIndex(null));
+        setAudioElements(prev => ({ ...prev, [index]: audio }));
+      }
+    });
+  }, [reelState.clips]);
+
+  // Cleanup audio elements on unmount
+  useEffect(() => {
+    return () => {
+      Object.values(audioElements).forEach(audio => {
+        if (audio) {
+          audio.pause();
+          audio.remove();
+        }
+      });
+    };
+  }, []);
+
   // Load content from localStorage on mount
   useEffect(() => {
     const savedContent = localStorage.getItem('reelContent');
@@ -200,19 +223,26 @@ export default function ScriptAndVideo({
 
   const toggleAudioPlayback = (index: number) => {
     const audio = audioElements[index];
-    if (!audio) return;
-
-    if (playingAudioIndex === index) {
-      audio.pause();
-      setPlayingAudioIndex(null);
-    } else {
-      // Stop any currently playing audio
-      if (playingAudioIndex !== null && audioElements[playingAudioIndex]) {
-        audioElements[playingAudioIndex]?.pause();
-      }
-      audio.currentTime = 0;
-      audio.play();
+    if (!audio && reelState.clips[index].voiceAudio) {
+      // Create new audio element if it doesn't exist
+      const newAudio = new Audio(reelState.clips[index].voiceAudio);
+      newAudio.addEventListener('ended', () => setPlayingAudioIndex(null));
+      setAudioElements(prev => ({ ...prev, [index]: newAudio }));
+      newAudio.play();
       setPlayingAudioIndex(index);
+    } else if (audio) {
+      if (playingAudioIndex === index) {
+        audio.pause();
+        setPlayingAudioIndex(null);
+      } else {
+        // Stop any currently playing audio
+        if (playingAudioIndex !== null && audioElements[playingAudioIndex]) {
+          audioElements[playingAudioIndex]?.pause();
+        }
+        audio.currentTime = 0;
+        audio.play();
+        setPlayingAudioIndex(index);
+      }
     }
   };
 

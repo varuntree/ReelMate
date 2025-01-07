@@ -1,7 +1,7 @@
 import { PollyClient, SynthesizeSpeechCommand, OutputFormat, Engine, TextType, VoiceId } from "@aws-sdk/client-polly";
 
 const client = new PollyClient({
-  region: process.env['AWS_REGION'],
+  region: process.env['AWS_REGION'] || 'us-east-1',
   credentials: {
     accessKeyId: process.env['AWS_ACCESS_KEY_ID']!,
     secretAccessKey: process.env['AWS_SECRET_ACCESS_KEY']!,
@@ -42,7 +42,7 @@ export const AVAILABLE_VOICES = {
 
 export async function synthesizeSpeech(
   text: string,
-  settings: VoiceSettings = { voiceId: "Joanna" }
+  settings: VoiceSettings = { voiceId: "Joey" }
 ) {
   const { voiceId } = settings;
 
@@ -51,7 +51,7 @@ export async function synthesizeSpeech(
     Text: text,
     TextType: "text" as TextType,
     VoiceId: voiceId,
-    Engine: "standard" as Engine,
+    Engine: "neural" as Engine,
   };
 
   try {
