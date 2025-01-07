@@ -1,7 +1,7 @@
+// Component for the initial prompt input page
 'use client';
 
 import { useState } from 'react';
-import { motion } from 'framer-motion';
 import { useRouter } from 'next/navigation';
 import { type GenerateReelContentResponse, type ReelContent } from '@/app/types/api';
 import { searchPexelsVideos } from '@/app/api/services/pexelsService';
@@ -20,16 +20,16 @@ export default function PromptPage({ onSubmit }: PromptPageProps) {
     const response = await fetch('/api/reel/generate', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
+      body: JSON.stringify({ 
         prompt,
         includeBgMusicCategory: true // Request background music category
       }),
     });
-
+    
     if (!response.ok) {
       throw new Error('Failed to generate reel content');
     }
-
+    
     return await response.json() as GenerateReelContentResponse;
   };
 
@@ -39,9 +39,13 @@ export default function PromptPage({ onSubmit }: PromptPageProps) {
         try {
           // Join keywords with spaces and use the first one as fallback
           const searchQuery = clip.videoKeywords.join(' ');
+          const fallbackQuery = clip.videoKeywords[0];
+          
+          // Try with combined keywords first
           let videoResponse = await searchPexelsVideos(searchQuery);
           if (videoResponse.videos.length === 0) {
-            videoResponse = await searchPexelsVideos('people lifestyle');
+            const fallbackQuery = 'people lifestyle';
+            videoResponse = await searchPexelsVideos(fallbackQuery);
           }
 
           const selectedVideo = videoResponse.videos[0];
@@ -112,7 +116,7 @@ export default function PromptPage({ onSubmit }: PromptPageProps) {
       // Call onSubmit if provided
       if (onSubmit) onSubmit(prompt.trim());
 
-      // Redirect to editor page - Commented out as per original code
+      // Redirect to editor page
       // router.push('/editor');
     } catch (error) {
       console.error('Error generating reel:', error);
@@ -123,44 +127,38 @@ export default function PromptPage({ onSubmit }: PromptPageProps) {
   };
 
   return (
-    <div className="h-screen w-full dark:bg-black bg-white dark:bg-grid-white/[0.05] bg-grid-black/[0.05] relative flex items-center justify-center">
-      <div className="absolute pointer-events-none inset-0 flex items-center justify-center dark:bg-black bg-white [mask-image:radial-gradient(ellipse_at_center,transparent_20%,black)]" />
-      <div className="max-w-2xl mx-auto p-4">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-          className="space-y-8"
-        >
-          <h1 className="text-4xl md:text-6xl font-bold text-center bg-clip-text text-transparent bg-gradient-to-b from-neutral-800 to-neutral-500 dark:from-neutral-50 dark:to-neutral-400">
-            Create Your AI Reel
-          </h1>
-
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="relative">
-              <input
-                type="text"
-                value={prompt}
-                onChange={(e) => setPrompt(e.target.value)}
-                disabled={isLoading}
-                placeholder="Enter your reel topic or description..."
-                className="block w-full h-14 px-4 bg-transparent border-b-2 border-neutral-300 dark:border-neutral-700 focus:border-black dark:focus:border-white transition-colors placeholder:text-neutral-600 dark:placeholder:text-neutral-400"
-              />
-              <div className="absolute inset-0 rounded-lg bg-gradient-to-b from-black/5 dark:from-white/5 to-transparent opacity-0 peer-focus:opacity-100 transition-opacity pointer-events-none" />
-            </div>
-
-            <motion.button
-              type="submit"
-              disabled={!prompt.trim() || isLoading}
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              className="w-full px-8 py-4 rounded-lg bg-gradient-to-b from-black to-neutral-800 dark:from-white dark:to-neutral-200 text-white dark:text-black font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-gray-900 to-gray-800">
+      <div className="w-full max-w-lg p-8">
+        <h1 className="mb-8 text-center text-4xl font-bold text-white">
+          Create Your AI Reel
+        </h1>
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <div>
+            <label
+              htmlFor="prompt"
+              className="mb-2 block text-sm font-medium text-gray-300"
             >
-              {isLoading ? 'Generating Reel...' : 'Create Reel'}
-            </motion.button>
-          </form>
-        </motion.div>
+              What would you like your reel to be about?
+            </label>
+            <textarea
+              id="prompt"
+              rows={4}
+              className="w-full rounded-lg border border-gray-600 bg-gray-700 p-4 text-white placeholder-gray-400 focus:border-blue-500 focus:ring-blue-500"
+              placeholder="Enter your reel topic or description..."
+              value={prompt}
+              onChange={(e) => setPrompt(e.target.value)}
+              disabled={isLoading}
+            />
+          </div>
+          <button
+            type="submit"
+            className="w-full rounded-lg bg-blue-600 px-5 py-3 text-center text-sm font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-4 focus:ring-blue-800 disabled:opacity-50"
+            disabled={!prompt.trim() || isLoading}
+          >
+            {isLoading ? 'Generating Reel...' : 'Create Reel'}
+          </button>
+        </form>
       </div>
     </div>
   );
-}
+} 
