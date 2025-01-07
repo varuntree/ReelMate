@@ -6,6 +6,10 @@ import { useRouter } from 'next/navigation';
 import { type GenerateReelContentResponse, type ReelContent } from '@/app/types/api';
 import { searchPexelsVideos } from '@/app/api/services/pexelsService';
 import { searchFreesoundMusic } from '@/app/api/services/freesoundService';
+import { HeroHighlight, Highlight } from './ui/hero-highlight';
+import { PlaceholdersAndVanishInput } from './ui/placeholders-and-vanish-input';
+import { MultiStepLoader } from './ui/multi-step-loader';
+import { IconSquareRoundedX } from "@tabler/icons-react";
 
 interface PromptPageProps {
   onSubmit?: (prompt: string) => void;
@@ -15,6 +19,17 @@ export default function PromptPage({ onSubmit }: PromptPageProps) {
   const [prompt, setPrompt] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
+
+  const loadingStates = [
+    { text: "Analyzing your creative prompt..." },
+    { text: "Crafting an engaging storyline..." },
+    { text: "Generating AI-powered script..." },
+    { text: "Finding perfect video clips..." },
+    { text: "Creating professional voice-over..." },
+    { text: "Adding background ambiance..." },
+    { text: "Assembling your masterpiece..." },
+    { text: "Finalizing your viral reel..." }
+  ];
 
   const generateReelContent = async (prompt: string) => {
     const response = await fetch('/api/reel/generate', {
@@ -127,38 +142,54 @@ export default function PromptPage({ onSubmit }: PromptPageProps) {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-gray-900 to-gray-800">
-      <div className="w-full max-w-lg p-8">
-        <h1 className="mb-8 text-center text-4xl font-bold text-white">
-          Create Your AI Reel
-        </h1>
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div>
-            <label
-              htmlFor="prompt"
-              className="mb-2 block text-sm font-medium text-gray-300"
-            >
-              What would you like your reel to be about?
-            </label>
-            <textarea
-              id="prompt"
-              rows={4}
-              className="w-full rounded-lg border border-gray-600 bg-gray-700 p-4 text-white placeholder-gray-400 focus:border-blue-500 focus:ring-blue-500"
-              placeholder="Enter your reel topic or description..."
-              value={prompt}
-              onChange={(e) => setPrompt(e.target.value)}
-              disabled={isLoading}
-            />
-          </div>
-          <button
-            type="submit"
-            className="w-full rounded-lg bg-blue-600 px-5 py-3 text-center text-sm font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-4 focus:ring-blue-800 disabled:opacity-50"
-            disabled={!prompt.trim() || isLoading}
+    <HeroHighlight className="w-full max-w-4xl mx-auto px-4">
+      <div className="flex flex-col items-center justify-center space-y-6 text-center">
+        <div className="space-y-4">
+          <h1 className="text-4xl md:text-5xl font-bold text-black dark:text-white">
+              Instant Reel Creation & Automatic Publishing: Boost Your Revenue with Zero Effort. Our AI Does the Heavy Lifting for You
+          </h1>
+          <p className="text-xl md:text-2xl mt-4 text-gray-300">
+            Effortlessly Increase Engagement and Earnings with Our Auto-Publishing Reel Technology.
+          </p>
+        </div>
+
+        <div className="w-full max-w-lg mt-8">
+          <PlaceholdersAndVanishInput
+            placeholders={[
+              "Create a reel about healthy lifestyle tips...",
+              "Generate a reel about digital marketing strategies...",
+              "Make a reel about travel destinations...",
+              "Design a reel about cooking recipes...",
+            ]}
+            onChange={(e) => setPrompt(e.target.value)}
+            onSubmit={handleSubmit}
+          />
+          <button 
+            onClick={handleSubmit}
+            disabled={prompt.length < 5}
+            className="px-4 py-2 backdrop-blur-sm border bg-emerald-00/20 border-emerald-500/20 text-white mx-auto text-center rounded-full relative mt-4 w-full disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {isLoading ? 'Generating Reel...' : 'Create Reel'}
+            <span>{isLoading ? 'Generating...' : 'Generate Reel'} →</span>
+            <div className="absolute inset-x-0 h-px -bottom-px bg-gradient-to-r w-3/4 mx-auto from-transparent via-emerald-500 to-transparent" />
           </button>
-        </form>
+
+          <MultiStepLoader
+            loadingStates={loadingStates}
+            loading={isLoading}
+            duration={2000}
+            loop={false}
+          />
+
+          {isLoading && (
+            <button
+              className="fixed top-4 right-4 text-black dark:text-white z-[120]"
+              onClick={() => setIsLoading(false)}
+            >
+              <IconSquareRoundedX className="h-10 w-10" />
+            </button>
+          )}
+        </div>
       </div>
-    </div>
+    </HeroHighlight>
   );
 } 
