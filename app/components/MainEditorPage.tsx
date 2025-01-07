@@ -26,6 +26,30 @@ export default function MainEditorPage({
     }));
   };
 
+  const handleSaveTemplate = (name: string) => {
+    setReelState(prev => ({
+      ...prev,
+      savedTemplates: [
+        ...prev.savedTemplates,
+        {
+          id: `template-${Date.now()}`,
+          name,
+          style: { ...prev.textStyle },
+        },
+      ],
+    }));
+  };
+
+  const handleApplyTemplate = (templateId: string) => {
+    const template = reelState.savedTemplates.find(t => t.id === templateId);
+    if (template) {
+      setReelState(prev => ({
+        ...prev,
+        textStyle: { ...template.style },
+      }));
+    }
+  };
+
   return (
     <div className="flex h-screen overflow-hidden bg-gray-900">
       {/* Left Pane - Editor Sections */}
@@ -56,6 +80,9 @@ export default function MainEditorPage({
             setShowText={(show) => setReelState(prev => ({ ...prev, showText: show }))}
             textStyle={reelState.textStyle}
             onStyleChange={(style) => setReelState(prev => ({ ...prev, textStyle: { ...prev.textStyle, ...style } }))}
+            savedTemplates={reelState.savedTemplates}
+            onSaveTemplate={handleSaveTemplate}
+            onApplyTemplate={handleApplyTemplate}
           />
         </div>
       </div>

@@ -234,6 +234,7 @@ export default function ReelComposition({ reelState }: ReelCompositionProps) {
                   fontSize: reelState.textStyle.size === 'small' ? '2rem' : 
                           reelState.textStyle.size === 'medium' ? '2.5rem' : '3rem',
                   fontWeight: reelState.textStyle.fontWeight,
+                  fontFamily: reelState.textStyle.fontFamily,
                   textDecoration: reelState.textStyle.underline ? 'underline' : 'none',
                   textShadow: reelState.textStyle.decoration === 'shadow1' ? '2px 2px 4px rgba(0,0,0,0.5)' :
                              reelState.textStyle.decoration === 'shadow2' ? '0 0 10px rgba(255,255,255,0.8), 0 0 20px rgba(255,255,255,0.8)' :
@@ -263,6 +264,7 @@ export default function ReelComposition({ reelState }: ReelCompositionProps) {
                         fontSize: reelState.textStyle.size === 'small' ? '4rem' : 
                                 reelState.textStyle.size === 'medium' ? '4.5rem' : '5rem',
                         fontWeight: reelState.textStyle.fontWeight,
+                        fontFamily: reelState.textStyle.fontFamily,
                         textDecoration: reelState.textStyle.underline ? 'underline' : 'none',
                         textShadow: reelState.textStyle.decoration === 'shadow1' ? '2px 2px 4px rgba(0,0,0,0.5)' :
                                    reelState.textStyle.decoration === 'shadow2' ? '0 0 10px rgba(255,255,255,0.8), 0 0 20px rgba(255,255,255,0.8)' :

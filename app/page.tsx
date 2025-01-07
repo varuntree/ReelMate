@@ -31,7 +31,21 @@ export interface ReelState {
     size: 'small' | 'medium' | 'large';
     align: 'left' | 'center' | 'right';
     decoration: 'none' | 'shadow1' | 'shadow2' | 'shadow3' | 'shadow4';
+    fontFamily: string;
   };
+  savedTemplates: Array<{
+    id: string;
+    name: string;
+    style: {
+      fontWeight: 'normal' | 'bold';
+      color: string;
+      underline: boolean;
+      size: 'small' | 'medium' | 'large';
+      align: 'left' | 'center' | 'right';
+      decoration: 'none' | 'shadow1' | 'shadow2' | 'shadow3' | 'shadow4';
+      fontFamily: string;
+    };
+  }>;
   overlayText: Array<{
     id: string;
     text: string;
@@ -71,7 +85,36 @@ export default function Home() {
       size: 'medium',
       align: 'center',
       decoration: 'none',
+      fontFamily: 'var(--font-inter)',
     },
+    savedTemplates: [
+      {
+        id: 'template-1',
+        name: 'Default',
+        style: {
+          fontWeight: 'normal',
+          color: '#ffffff',
+          underline: false,
+          size: 'medium',
+          align: 'center',
+          decoration: 'none',
+          fontFamily: 'var(--font-inter)',
+        },
+      },
+      {
+        id: 'template-2',
+        name: 'Bold Yellow',
+        style: {
+          fontWeight: 'bold',
+          color: '#FFD700',
+          underline: false,
+          size: 'large',
+          align: 'center',
+          decoration: 'shadow1',
+          fontFamily: 'var(--font-roboto)',
+        },
+      },
+    ],
   });
 
   // Handle the initial prompt submission
