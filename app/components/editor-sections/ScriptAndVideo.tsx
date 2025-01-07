@@ -10,7 +10,7 @@ import { FaVideo, FaSearch, FaPlay, FaPause } from 'react-icons/fa';
 interface ScriptAndVideoProps {
   reelState: ReelState;
   setReelState: React.Dispatch<React.SetStateAction<ReelState>>;
-  onVideoSelect: (video: PexelsVideo) => void;
+  onVideoSelect: (video: PexelsVideo, clipIndex: number) => void;
 }
 
 const THEMES: { value: ReelTheme; label: string }[] = [
@@ -166,7 +166,7 @@ export default function ScriptAndVideo({
 
   const handleVideoSelect = (video: PexelsVideo) => {
     if (selectedClipIndex === null) return;
-    onVideoSelect(video);
+    onVideoSelect(video, selectedClipIndex);
   };
 
   const generateVoiceForClip = async (index: number, text: string) => {

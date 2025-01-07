@@ -16,15 +16,13 @@ export default function MainEditorPage({
   reelState,
   setReelState,
 }: MainEditorPageProps) {
-  const handleVideoSelect = (video: any) => {
-    if (reelState.clips.length > 0) {
-      setReelState(prev => ({
-        ...prev,
-        clips: prev.clips.map((clip, i) => 
-          i === 0 ? { ...clip, video } : clip
-        ),
-      }));
-    }
+  const handleVideoSelect = (video: any, clipIndex: number) => {
+    setReelState(prev => ({
+      ...prev,
+      clips: prev.clips.map((clip, i) => 
+        i === clipIndex ? { ...clip, video } : clip
+      ),
+    }));
   };
 
   return (

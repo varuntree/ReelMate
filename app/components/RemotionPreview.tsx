@@ -17,6 +17,10 @@ const PREVIEW_HEIGHT = 844;
 const VIDEO_WIDTH = 1080;
 const VIDEO_HEIGHT = 1920;
 
+// Minimum spacing between clips (2 seconds)
+const MIN_CLIP_SPACING = 60; // 2 seconds at 30fps
+const TRANSITION_DURATION = 30; // 1 second transition
+
 export default function RemotionPreview({ reelState }: RemotionPreviewProps) {
   const fps = 30;
   const [audioDurations, setAudioDurations] = useState<{ [key: number]: number }>({});
@@ -57,14 +61,24 @@ export default function RemotionPreview({ reelState }: RemotionPreviewProps) {
   // Calculate total duration based on audio durations
   const durationInFrames = useMemo(() => {
     const totalDuration = reelState.clips.reduce((total, clip, index) => {
+      let clipDuration;
       if (clip.voiceAudio && audioDurations[index]) {
-        return total + Math.round(audioDurations[index] * fps);
+        // Use voice audio duration plus minimum spacing
+        clipDuration = Math.round(audioDurations[index] * fps) + MIN_CLIP_SPACING;
+      } else {
+        // Use default duration of 5 seconds plus minimum spacing for clips without audio
+        clipDuration = 5 * fps + MIN_CLIP_SPACING;
       }
-      return total + fps; // Add 1 second for clips without audio
+      
+      // For all clips except the first one, subtract transition overlap
+      if (index > 0) {
+        return total + clipDuration - TRANSITION_DURATION;
+      }
+      return total + clipDuration;
     }, 0);
     
-    // Return at least 1 second duration
-    return Math.max(totalDuration, fps);
+    // Return at least 3 seconds duration
+    return Math.max(totalDuration, 3 * fps);
   }, [reelState.clips, audioDurations, fps]);
 
   // Don't render player until we have at least one clip with video
