@@ -221,29 +221,34 @@ export default function ReelComposition({ reelState }: ReelCompositionProps) {
             )}
 
             {/* Clip Text Overlay */}
-            {clip.text && (
+            {clip.text && reelState.showText && (
               <div
                 style={{
                   position: 'absolute',
                   left: '50%',
-                  top: '85%', // Positioned at the bottom area like TikTok
+                  top: '85%',
                   transform: 'translate(-50%, -50%)',
                   width: '90%',
-                  textAlign: 'center',
-                  color: 'white',
-                  fontSize: '2.5rem',
-                  fontWeight: 'bold',
-                  textShadow: '2px 2px 4px rgba(0,0,0,0.8)', // Strong text shadow for visibility
+                  textAlign: reelState.textStyle.align,
+                  color: reelState.textStyle.color,
+                  fontSize: reelState.textStyle.size === 'small' ? '2rem' : 
+                          reelState.textStyle.size === 'medium' ? '2.5rem' : '3rem',
+                  fontWeight: reelState.textStyle.fontWeight,
+                  textDecoration: reelState.textStyle.underline ? 'underline' : 'none',
+                  textShadow: reelState.textStyle.decoration === 'shadow1' ? '2px 2px 4px rgba(0,0,0,0.5)' :
+                             reelState.textStyle.decoration === 'shadow2' ? '0 0 10px rgba(255,255,255,0.8), 0 0 20px rgba(255,255,255,0.8)' :
+                             reelState.textStyle.decoration === 'shadow3' ? '-2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 2px 2px 0 #000' :
+                             'none',
                   display: 'flex',
                   flexWrap: 'wrap',
-                  justifyContent: 'center',
+                  justifyContent: reelState.textStyle.align === 'left' ? 'flex-start' :
+                                reelState.textStyle.align === 'right' ? 'flex-end' : 'center',
                   alignItems: 'center',
                   gap: '8px',
                 }}
               >
                 {clip.text.split(' ').map((word, wordIndex) => {
-                  // Calculate when each word should appear
-                  const wordsPerSecond = 2; // Adjust this value to control speed
+                  const wordsPerSecond = 2;
                   const framesPerWord = fps / wordsPerSecond;
                   const wordStartFrame = wordIndex * framesPerWord;
 
@@ -254,10 +259,15 @@ export default function ReelComposition({ reelState }: ReelCompositionProps) {
                       startFrame={wordStartFrame}
                       duration={framesPerWord}
                       style={{
-                        color: 'white',
-                        fontSize: '2.5rem',
-                        fontWeight: 'bold',
-                        textShadow: '2px 2px 4px rgba(0,0,0,0.8)',
+                        color: reelState.textStyle.color,
+                        fontSize: reelState.textStyle.size === 'small' ? '4rem' : 
+                                reelState.textStyle.size === 'medium' ? '4.5rem' : '5rem',
+                        fontWeight: reelState.textStyle.fontWeight,
+                        textDecoration: reelState.textStyle.underline ? 'underline' : 'none',
+                        textShadow: reelState.textStyle.decoration === 'shadow1' ? '2px 2px 4px rgba(0,0,0,0.5)' :
+                                   reelState.textStyle.decoration === 'shadow2' ? '0 0 10px rgba(255,255,255,0.8), 0 0 20px rgba(255,255,255,0.8)' :
+                                   reelState.textStyle.decoration === 'shadow3' ? '-2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 2px 2px 0 #000' :
+                                   'none',
                       }}
                     />
                   );

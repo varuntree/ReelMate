@@ -5,6 +5,7 @@ import { type ReelState } from '../page';
 import ScriptAndVideo from './editor-sections/ScriptAndVideo';
 import VoiceAndBgMusic from './editor-sections/VoiceAndBgMusic';
 import CaptionsAndStyle from './editor-sections/CaptionsAndStyle';
+import TextStyles from './editor-sections/TextStyles';
 import RemotionPreview from './RemotionPreview';
 
 interface MainEditorPageProps {
@@ -47,6 +48,14 @@ export default function MainEditorPage({
           <CaptionsAndStyle
             reelState={reelState}
             setReelState={setReelState}
+          />
+
+          {/* Section 4: Text Styles */}
+          <TextStyles
+            showText={reelState.showText}
+            setShowText={(show) => setReelState(prev => ({ ...prev, showText: show }))}
+            textStyle={reelState.textStyle}
+            onStyleChange={(style) => setReelState(prev => ({ ...prev, textStyle: { ...prev.textStyle, ...style } }))}
           />
         </div>
       </div>

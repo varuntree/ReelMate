@@ -11,6 +11,7 @@
   "dependencies": {
     "@aws-sdk/client-polly": "^3.721.0",
     "@google/generative-ai": "^0.21.0",
+    "@headlessui/react": "^2.2.0",
     "@remotion/captions": "^4.0.245",
     "@remotion/cli": "^4.0.245",
     "@remotion/media-utils": "^4.0.245",

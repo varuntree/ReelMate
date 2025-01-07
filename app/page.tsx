@@ -23,6 +23,15 @@ export interface ReelState {
     pacing: 'slow' | 'medium' | 'fast';
   };
   clips: TextClip[];
+  showText: boolean;
+  textStyle: {
+    fontWeight: 'normal' | 'bold';
+    color: string;
+    underline: boolean;
+    size: 'small' | 'medium' | 'large';
+    align: 'left' | 'center' | 'right';
+    decoration: 'none' | 'shadow1' | 'shadow2' | 'shadow3' | 'shadow4';
+  };
   overlayText: Array<{
     id: string;
     text: string;
@@ -54,6 +63,15 @@ export default function Home() {
     overlayText: [],
     clips: [],
     transition: 'fade',
+    showText: true,
+    textStyle: {
+      fontWeight: 'normal',
+      color: '#ffffff',
+      underline: false,
+      size: 'medium',
+      align: 'center',
+      decoration: 'none',
+    },
   });
 
   // Handle the initial prompt submission
