@@ -167,9 +167,12 @@ export default function PromptPage({ onSubmit }: PromptPageProps) {
           <button 
             onClick={handleSubmit}
             disabled={prompt.length < 5}
-            className="px-8 py-4 bg-primary/80 backdrop-blur-sm text-white font-bold tracking-wide uppercase rounded-full w-full mt-4 transform hover:scale-105 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 border border-primary/20"
+            className="relative inline-flex h-12 overflow-hidden rounded-full p-[1px] focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-2 focus:ring-offset-slate-50 mt-4 w-full  disabled:cursor-not-allowed"
           >
-            <span>{isLoading ? 'Generating...' : 'Generate Reel'} →</span>
+            <span className="absolute inset-[-1000%]  animate-[spin_2s_linear_infinite] bg-[conic-gradient(from_90deg_at_50%_50%,#e8541a_0%,#FFFFFF_50%,#FFA500_100%)]" />
+            <span className="inline-flex h-full w-full cursor-pointer items-center justify-center rounded-full bg-slate-950 px-3 py-1 text-lg font-medium text-white backdrop-blur-3xl">
+              {isLoading ? 'Generating...' : 'Generate Reel'}
+            </span>
           </button>
 
           <MultiStepLoader

@@ -14,12 +14,11 @@ export default {
   theme: {
     extend: {
       colors: {
-        background: "var(--background)",
-        foreground: "var(--foreground)",
-        text: '#ffffff',
-        primary: '#e47208',
-        secondary: '#e8541a',
-        accent: '#dc2828',
+        text: "#08140d",
+        background: "#f9f9fb",
+        primary: "#ffffff",
+        secondary: "#98b3d5",
+        accent: "#608ce0",
       },
     },
   },
