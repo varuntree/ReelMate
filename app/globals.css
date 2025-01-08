@@ -3,8 +3,8 @@
 @tailwind utilities;
 
 :root {
-  --foreground-rgb: 255, 255, 255;
-  --background-rgb: 0, 0, 0;
+  --foreground-rgb: 8, 20, 13;
+  --background-rgb: 249, 249, 251;
 }
 
 /* Font family mappings */

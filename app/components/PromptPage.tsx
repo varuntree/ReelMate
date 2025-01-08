@@ -145,7 +145,7 @@ export default function PromptPage({ onSubmit }: PromptPageProps) {
     <HeroHighlight className="w-full max-w-4xl mx-auto px-4">
       <div className="flex flex-col items-center justify-center space-y-6 text-center">
         <div className="space-y-4">
-          <h1 className="text-4xl md:text-5xl font-bold text-black dark:text-white">
+          <h1 className="text-4xl md:text-5xl font-bold text-text">
               Instant Reel Creation & Automatic Publishing: Boost Your Revenue with Zero Effort. Our AI Does the Heavy Lifting for You
           </h1>
           <p className="text-xl md:text-2xl mt-4 text-gray-300">
@@ -169,8 +169,8 @@ export default function PromptPage({ onSubmit }: PromptPageProps) {
             disabled={prompt.length < 5}
             className="relative inline-flex h-12 overflow-hidden rounded-full p-[1px] focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-2 focus:ring-offset-slate-50 mt-4 w-full  disabled:cursor-not-allowed"
           >
-            <span className="absolute inset-[-1000%]  animate-[spin_2s_linear_infinite] bg-[conic-gradient(from_90deg_at_50%_50%,#e8541a_0%,#FFFFFF_50%,#FFA500_100%)]" />
-            <span className="inline-flex h-full w-full cursor-pointer items-center justify-center rounded-full bg-slate-950 px-3 py-1 text-lg font-medium text-white backdrop-blur-3xl">
+            <span className="absolute inset-[-1000%]  animate-[spin_2s_linear_infinite] bg-[conic-gradient(from_90deg_at_50%_50%,#608ce0_0%,#98b3d5_50%,#608ce0_100%)]" />
+            <span className="inline-flex h-full w-full cursor-pointer items-center justify-center rounded-full bg-primary px-3 py-1 text-lg font-medium text-text backdrop-blur-3xl">
               {isLoading ? 'Generating...' : 'Generate Reel'}
             </span>
           </button>
