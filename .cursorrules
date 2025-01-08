@@ -25,14 +25,17 @@ Code Organization
 Use a Modular Structure
 Organize the code by feature or functionality. Each module should have a specific responsibility.
 Always write and use the mobile friendly code.
-
-for ui design use   colors: {
+always use the theme that is defined in the tailwind.config.ts file:  theme: {
+    extend: {
+      colors: {
         text: "#08140d",
         background: "#f9f9fb",
-        primary: "#ffffff", //white 
-        secondary: "#98b3d5", //light blue
-        accent: "#608ce0", //dark blue
+        primary: "#ffffff",
+        secondary: "#98b3d5",
+        accent: "#608ce0",
       },
+    },
+  },
 
 Folder Structure Example:
 

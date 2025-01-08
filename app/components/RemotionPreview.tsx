@@ -11,7 +11,7 @@ interface RemotionPreviewProps {
 
 // Mobile preview dimensions (iPhone 12 Pro)
 const PREVIEW_WIDTH = 390;
-const PREVIEW_HEIGHT = 744;
+const PREVIEW_HEIGHT = 844;
 
 // Actual video dimensions (1080p vertical)
 const VIDEO_WIDTH = 1080;
