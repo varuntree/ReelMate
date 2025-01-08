@@ -14,11 +14,11 @@ export default {
   theme: {
     extend: {
       colors: {
-        text: "#08140d",
-        background: "#f9f9fb",
-        primary: "#ffffff",
-        secondary: "#98b3d5",
-        accent: "#608ce0",
+        text: '#09090a',
+        background: '#f5f5f9',
+        primary: '#0000a7',
+        secondary: '#1468cf',
+        accent: '#ffffff',
       },
       animation: {
         aurora: "aurora 60s linear infinite",

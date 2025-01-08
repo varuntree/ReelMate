@@ -1,4 +1,3 @@
-
 // Component for the initial prompt input page
 'use client';
 
@@ -8,6 +7,7 @@ import { type GenerateReelContentResponse, type ReelContent } from '@/app/types/
 import { searchPexelsVideos } from '@/app/api/services/pexelsService';
 import { searchFreesoundMusic } from '@/app/api/services/freesoundService';
 import { AuroraBackground } from './ui/aurora-background';
+import { motion } from 'framer-motion';
 
 interface PromptPageProps {
   onSubmit?: (prompt: string) => void;
@@ -24,7 +24,7 @@ export default function PromptPage({ onSubmit }: PromptPageProps) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ 
         prompt,
-        includeBgMusicCategory: true
+        includeBgMusicCategory: true // Request background music category
       }),
     });
     
@@ -39,7 +39,11 @@ export default function PromptPage({ onSubmit }: PromptPageProps) {
     const updatedClips = await Promise.all(
       content.clips.map(async (clip) => {
         try {
+          // Join keywords with spaces and use the first one as fallback
           const searchQuery = clip.videoKeywords.join(' ');
+          const fallbackQuery = clip.videoKeywords[0];
+          
+          // Try with combined keywords first
           let videoResponse = await searchPexelsVideos(searchQuery);
           if (videoResponse.videos.length === 0) {
             const fallbackQuery = 'people lifestyle';
@@ -88,12 +92,17 @@ export default function PromptPage({ onSubmit }: PromptPageProps) {
 
     setIsLoading(true);
     try {
+      // Generate reel content
       const { content, error } = await generateReelContent(prompt.trim());
       if (error || !content) throw new Error(error || 'Failed to generate content');
 
+      // Fetch videos for each clip
       const contentWithVideos = await fetchVideosForClips(content);
+
+      // Fetch background music based on the suggested category
       const bgMusicUrl = await fetchBgMusic(content.bgMusicCategory);
 
+      // Create initial state with default voice and background music
       const initialState = {
         ...contentWithVideos,
         voiceSettings: {
@@ -103,10 +112,14 @@ export default function PromptPage({ onSubmit }: PromptPageProps) {
         bgMusic: bgMusicUrl
       };
 
+      // Store the complete content in localStorage for the editor page
       localStorage.setItem('reelContent', JSON.stringify(initialState));
 
+      // Call onSubmit if provided
       if (onSubmit) onSubmit(prompt.trim());
 
+      // Redirect to editor page
+      // router.push('/editor');
     } catch (error) {
       console.error('Error generating reel:', error);
       alert('Failed to generate reel. Please try again.');
@@ -116,28 +129,34 @@ export default function PromptPage({ onSubmit }: PromptPageProps) {
   };
 
   return (
-    <AuroraBackground className="relative">
-      <div className="w-full max-w-2xl mx-auto p-8 relative z-10">
-        <div className="text-center space-y-4 mb-8">
-          <h1 className="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-neutral-100 to-neutral-300">
-            Create Your AI Reel
-          </h1>
-          <p className="text-neutral-300">
-            Transform your ideas into engaging video content
-          </p>
-        </div>
+    <AuroraBackground>
+       <motion.div
+        initial={{ opacity: 0.0, y: 40 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        transition={{
+          delay: 0.3,
+          duration: 0.8,
+          ease: "easeInOut",
+        }}
+        className="relative flex flex-col gap-4 items-center justify-center px-4"
+      >
+     <div className="flex min-h-screen items-center justify-center">
+      <div className="w-full max-w-lg p-8">
+        <h1 className="mb-8 text-center text-4xl font-bold text-white">
+          Create Your AI Reel
+        </h1>
         <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="space-y-2">
+          <div>
             <label
               htmlFor="prompt"
-              className="block text-sm font-medium text-neutral-200"
+              className="mb-2 block text-sm font-medium text-gray-300"
             >
               What would you like your reel to be about?
             </label>
             <textarea
               id="prompt"
               rows={4}
-              className="w-full rounded-lg border border-neutral-700 bg-neutral-800/50 backdrop-blur-sm p-4 text-white placeholder-neutral-400 focus:border-neutral-500 focus:ring-2 focus:ring-neutral-500 transition-all"
+              className="w-full rounded-lg border border-gray-600 bg-gray-700 p-4 text-white placeholder-gray-400 focus:border-blue-500 focus:ring-blue-500"
               placeholder="Enter your reel topic or description..."
               value={prompt}
               onChange={(e) => setPrompt(e.target.value)}
@@ -146,13 +165,15 @@ export default function PromptPage({ onSubmit }: PromptPageProps) {
           </div>
           <button
             type="submit"
+            className="w-full rounded-lg bg-blue-600 px-5 py-3 text-center text-sm font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-4 focus:ring-blue-800 disabled:opacity-50"
             disabled={!prompt.trim() || isLoading}
-            className="w-full rounded-lg bg-gradient-to-r from-neutral-800 to-neutral-900 hover:from-neutral-700 hover:to-neutral-800 px-5 py-3 text-sm font-medium text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed border border-neutral-700 backdrop-blur-sm"
           >
             {isLoading ? 'Generating Reel...' : 'Create Reel'}
           </button>
         </form>
       </div>
+    </div>
+    </motion.div>
     </AuroraBackground>
   );
-}
+} 
