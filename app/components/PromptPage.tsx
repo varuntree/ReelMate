@@ -2,12 +2,9 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
 import { type GenerateReelContentResponse, type ReelContent } from '@/app/types/api';
 import { searchPexelsVideos } from '@/app/api/services/pexelsService';
 import { searchFreesoundMusic } from '@/app/api/services/freesoundService';
-import { AuroraBackground } from './ui/aurora-background';
-import { motion } from 'framer-motion';
 
 interface PromptPageProps {
   onSubmit?: (prompt: string) => void;
@@ -16,7 +13,6 @@ interface PromptPageProps {
 export default function PromptPage({ onSubmit }: PromptPageProps) {
   const [prompt, setPrompt] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const router = useRouter();
 
   const generateReelContent = async (prompt: string) => {
     const response = await fetch('/api/reel/generate', {
@@ -129,18 +125,7 @@ export default function PromptPage({ onSubmit }: PromptPageProps) {
   };
 
   return (
-    <AuroraBackground>
-       <motion.div
-        initial={{ opacity: 0.0, y: 40 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        transition={{
-          delay: 0.3,
-          duration: 0.8,
-          ease: "easeInOut",
-        }}
-        className="relative flex flex-col gap-4 items-center justify-center px-4"
-      >
-     <div className="flex min-h-screen items-center justify-center">
+    <div className="flex min-h-screen items-center justify-center ">
       <div className="w-full max-w-lg p-8">
         <h1 className="mb-8 text-center text-4xl font-bold text-white">
           Create Your AI Reel
@@ -156,7 +141,7 @@ export default function PromptPage({ onSubmit }: PromptPageProps) {
             <textarea
               id="prompt"
               rows={4}
-              className="w-full rounded-lg border border-gray-600 bg-gray-700 p-4 text-white placeholder-gray-400 focus:border-blue-500 focus:ring-blue-500"
+              className="w-full rounded-lg border border-gray-600  p-4 text-white placeholder-gray-400 focus:border-blue-500 focus:ring-blue-500"
               placeholder="Enter your reel topic or description..."
               value={prompt}
               onChange={(e) => setPrompt(e.target.value)}
@@ -173,7 +158,5 @@ export default function PromptPage({ onSubmit }: PromptPageProps) {
         </form>
       </div>
     </div>
-    </motion.div>
-    </AuroraBackground>
   );
 } 
