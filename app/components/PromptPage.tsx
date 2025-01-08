@@ -116,13 +116,13 @@ export default function PromptPage({ onSubmit }: PromptPageProps) {
   };
 
   return (
-    <AuroraBackground className="relative bg-background">
+    <AuroraBackground className="relative">
       <div className="w-full max-w-2xl mx-auto p-8 relative z-10">
         <div className="text-center space-y-4 mb-8">
-          <h1 className="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-accent to-secondary">
+          <h1 className="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-neutral-100 to-neutral-300">
             Create Your AI Reel
           </h1>
-          <p className="text-text">
+          <p className="text-neutral-300">
             Transform your ideas into engaging video content
           </p>
         </div>
@@ -130,14 +130,14 @@ export default function PromptPage({ onSubmit }: PromptPageProps) {
           <div className="space-y-2">
             <label
               htmlFor="prompt"
-              className="block text-sm font-medium text-text"
+              className="block text-sm font-medium text-neutral-200"
             >
               What would you like your reel to be about?
             </label>
             <textarea
               id="prompt"
               rows={4}
-              className="w-full rounded-lg border border-secondary bg-primary/50 backdrop-blur-sm p-4 text-text placeholder-text/60 focus:border-accent focus:ring-2 focus:ring-accent transition-all"
+              className="w-full rounded-lg border border-neutral-700 bg-neutral-800/50 backdrop-blur-sm p-4 text-white placeholder-neutral-400 focus:border-neutral-500 focus:ring-2 focus:ring-neutral-500 transition-all"
               placeholder="Enter your reel topic or description..."
               value={prompt}
               onChange={(e) => setPrompt(e.target.value)}
@@ -147,7 +147,7 @@ export default function PromptPage({ onSubmit }: PromptPageProps) {
           <button
             type="submit"
             disabled={!prompt.trim() || isLoading}
-            className="w-full rounded-lg bg-gradient-to-r from-secondary to-accent hover:from-accent hover:to-secondary px-5 py-3 text-sm font-medium text-primary transition-colors disabled:opacity-50 disabled:cursor-not-allowed backdrop-blur-sm"
+            className="w-full rounded-lg bg-gradient-to-r from-neutral-800 to-neutral-900 hover:from-neutral-700 hover:to-neutral-800 px-5 py-3 text-sm font-medium text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed border border-neutral-700 backdrop-blur-sm"
           >
             {isLoading ? 'Generating Reel...' : 'Create Reel'}
           </button>
