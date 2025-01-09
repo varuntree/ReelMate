@@ -209,6 +209,8 @@ export default function ReelComposition({ reelState }: ReelCompositionProps) {
                   height: '100%',
                   objectFit: 'cover',
                 }}
+                muted
+                playsInline
               />
             </div>
 
@@ -344,4 +346,4 @@ export default function ReelComposition({ reelState }: ReelCompositionProps) {
       )}
     </AbsoluteFill>
   );
-} 
+}    

@@ -50,10 +50,26 @@ export default function MainEditorPage({
     }
   };
 
+  const handleCreateNewReel = () => {
+    // Clear localStorage
+    localStorage.removeItem('reelState');
+    // Reset state to trigger redirect to PromptPage
+    setReelState(prev => ({ ...prev, prompt: '' }));
+  };
+
   return (
     <div className="flex h-screen overflow-hidden bg-gray-900">
       {/* Left Pane - Editor Sections */}
       <div className="w-[60%] overflow-y-auto border-r border-gray-700 p-4">
+        <div className="mb-4 flex items-center justify-between">
+          <h1 className="text-2xl font-bold text-white">Edit Reel</h1>
+          <button
+            onClick={handleCreateNewReel}
+            className="rounded bg-blue-600 px-4 py-2 text-white hover:bg-blue-700 transition-colors"
+          >
+            Create New Reel
+          </button>
+        </div>
         <div className="space-y-6">
           {/* Section 1: Script and Video */}
           <ScriptAndVideo

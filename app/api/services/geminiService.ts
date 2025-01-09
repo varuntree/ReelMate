@@ -6,7 +6,7 @@ import {
 } from '@/app/types/api';
 
 // Initialize the Gemini API client
-const GEMINI_API_KEY = process.env['GOOGLE_GEMINI_API_KEY'];
+const GEMINI_API_KEY = process.env['GEMINI_API_KEY'];
 if (!GEMINI_API_KEY) {
   console.error('GOOGLE_GEMINI_API_KEY is not configured in environment variables');
 }

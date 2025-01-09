@@ -43,6 +43,7 @@ export interface ReelContent {
   clips: TextClip[];
   bgMusicKeywords: string[]; // keywords for background music search
   bgMusicCategory: BgMusicCategory; // category for background music
+  bgMusicUrl?: string; // URL of the selected background music
   style: {
     tone: string; // e.g., 'professional', 'casual', 'energetic'
     pacing: 'slow' | 'medium' | 'fast';

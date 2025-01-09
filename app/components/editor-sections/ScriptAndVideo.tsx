@@ -146,24 +146,6 @@ export default function ScriptAndVideo({
     };
   }, []);
 
-  // Load content from localStorage on mount
-  useEffect(() => {
-    const savedContent = localStorage.getItem('reelContent');
-    if (savedContent) {
-      try {
-        const content = JSON.parse(savedContent);
-        setReelState((prev) => ({
-          ...prev,
-          clips: content.clips,
-          style: content.style,
-          bgMusicKeywords: content.bgMusicKeywords,
-        }));
-      } catch (error) {
-        console.error('Failed to parse saved content:', error);
-      }
-    }
-  }, []);
-
   const handleVideoSelect = (video: PexelsVideo) => {
     if (selectedClipIndex === null) return;
     onVideoSelect(video, selectedClipIndex);

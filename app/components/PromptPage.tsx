@@ -3,84 +3,14 @@
 
 import { useState } from 'react';
 import { type GenerateReelContentResponse, type ReelContent } from '@/app/types/api';
-import { searchPexelsVideos } from '@/app/api/services/pexelsService';
-import { searchFreesoundMusic } from '@/app/api/services/freesoundService';
 
 interface PromptPageProps {
-  onSubmit?: (prompt: string) => void;
+  onSubmit: (prompt: string, content: ReelContent, bgMusicUrl: string | null) => Promise<void>;
 }
 
 export default function PromptPage({ onSubmit }: PromptPageProps) {
   const [prompt, setPrompt] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-
-  const generateReelContent = async (prompt: string) => {
-    const response = await fetch('/api/reel/generate', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ 
-        prompt,
-        includeBgMusicCategory: true // Request background music category
-      }),
-    });
-    
-    if (!response.ok) {
-      throw new Error('Failed to generate reel content');
-    }
-    
-    return await response.json() as GenerateReelContentResponse;
-  };
-
-  const fetchVideosForClips = async (content: ReelContent) => {
-    const updatedClips = await Promise.all(
-      content.clips.map(async (clip) => {
-        try {
-          // Join keywords with spaces and use the first one as fallback
-          const searchQuery = clip.videoKeywords.join(' ');
-          const fallbackQuery = clip.videoKeywords[0];
-          
-          // Try with combined keywords first
-          let videoResponse = await searchPexelsVideos(searchQuery);
-          if (videoResponse.videos.length === 0) {
-            const fallbackQuery = 'people lifestyle';
-            videoResponse = await searchPexelsVideos(fallbackQuery);
-          }
-
-          const selectedVideo = videoResponse.videos[0];
-          const bestQualityVideo = selectedVideo.video_files
-            .filter(file => file.width >= 720 && file.height >= 1280)
-            .sort((a, b) => (b.height * b.width) - (a.height * a.width))[0];
-
-          return {
-            ...clip,
-            video: {
-              id: selectedVideo.id,
-              url: bestQualityVideo.link,
-              duration: selectedVideo.duration,
-            },
-          };
-        } catch (error) {
-          console.error('Failed to fetch video for clip:', error);
-          return clip;
-        }
-      })
-    );
-
-    return { ...content, clips: updatedClips };
-  };
-
-  const fetchBgMusic = async (category: string) => {
-    try {
-      const response = await searchFreesoundMusic(category);
-      if (response.results.length > 0) {
-        return response.results[0].previews['preview-hq-mp3'];
-      }
-      return null;
-    } catch (error) {
-      console.error('Failed to fetch background music:', error);
-      return null;
-    }
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -88,34 +18,25 @@ export default function PromptPage({ onSubmit }: PromptPageProps) {
 
     setIsLoading(true);
     try {
-      // Generate reel content
-      const { content, error } = await generateReelContent(prompt.trim());
+      // Generate reel content with all data
+      const response = await fetch('/api/reel/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          prompt,
+          includeBgMusicCategory: true
+        }),
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to generate reel content');
+      }
+      
+      const { content, error } = await response.json() as GenerateReelContentResponse;
       if (error || !content) throw new Error(error || 'Failed to generate content');
 
-      // Fetch videos for each clip
-      const contentWithVideos = await fetchVideosForClips(content);
-
-      // Fetch background music based on the suggested category
-      const bgMusicUrl = await fetchBgMusic(content.bgMusicCategory);
-
-      // Create initial state with default voice and background music
-      const initialState = {
-        ...contentWithVideos,
-        voiceSettings: {
-          voiceId: 'Joey',
-          engine: 'neural'
-        },
-        bgMusic: bgMusicUrl
-      };
-
-      // Store the complete content in localStorage for the editor page
-      localStorage.setItem('reelContent', JSON.stringify(initialState));
-
-      // Call onSubmit if provided
-      if (onSubmit) onSubmit(prompt.trim());
-
-      // Redirect to editor page
-      // router.push('/editor');
+      // Update parent state with the generated content
+      await onSubmit(prompt.trim(), content, content.bgMusicUrl || null);
     } catch (error) {
       console.error('Error generating reel:', error);
       alert('Failed to generate reel. Please try again.');
@@ -125,7 +46,7 @@ export default function PromptPage({ onSubmit }: PromptPageProps) {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center ">
+    <div className="flex min-h-screen items-center bg-black justify-center ">
       <div className="w-full max-w-lg p-8">
         <h1 className="mb-8 text-center text-4xl font-bold text-white">
           Create Your AI Reel

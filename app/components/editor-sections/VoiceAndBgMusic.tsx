@@ -18,6 +18,7 @@ export default function VoiceAndBgMusic({
 }: VoiceAndBgMusicProps) {
   const [isPlayingBgMusic, setIsPlayingBgMusic] = useState(false);
   const [bgMusicAudio, setBgMusicAudio] = useState<HTMLAudioElement | null>(null);
+  const [isRegeneratingVoices, setIsRegeneratingVoices] = useState(false);
 
   // Load initial background music
   useEffect(() => {
@@ -38,6 +39,64 @@ export default function VoiceAndBgMusic({
       bgMusicAudio.play();
     }
     setIsPlayingBgMusic(!isPlayingBgMusic);
+  };
+
+  // Generate voice audio for a single clip
+  const generateVoiceForClip = async (text: string, voiceSettings: ReelState['voiceSettings']) => {
+    try {
+      const response = await fetch('/api/voice/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text, voiceSettings }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to generate voice');
+      }
+
+      const { audioBase64 } = await response.json();
+      return `data:audio/mp3;base64,${audioBase64}`;
+    } catch (error) {
+      console.error('Voice generation error:', error);
+      return null;
+    }
+  };
+
+  // Handle voice change and regenerate all clip voices
+  const handleVoiceChange = async (newVoiceSettings: ReelState['voiceSettings']) => {
+    setIsRegeneratingVoices(true);
+    
+    try {
+      // Update voice settings immediately
+      setReelState(prev => ({
+        ...prev,
+        voiceSettings: newVoiceSettings
+      }));
+
+      // Generate new voices for all clips in parallel
+      const updatedClips = await Promise.all(
+        reelState.clips.map(async (clip) => {
+          if (!clip.text) return clip;
+          
+          const newVoiceAudio = await generateVoiceForClip(clip.text, newVoiceSettings);
+          return {
+            ...clip,
+            voiceAudio: newVoiceAudio || clip.voiceAudio // Fallback to old audio if generation fails
+          };
+        })
+      );
+
+      // Update clips with new voice audio
+      setReelState(prev => ({
+        ...prev,
+        clips: updatedClips
+      }));
+    } catch (error) {
+      console.error('Failed to regenerate voices:', error);
+      alert('Some voices failed to regenerate. Please try again.');
+    } finally {
+      setIsRegeneratingVoices(false);
+    }
   };
 
   // Handle background music category change
@@ -76,15 +135,17 @@ export default function VoiceAndBgMusic({
       {/* Voice Settings */}
       <div className="mb-6">
         <h3 className="mb-2 text-lg font-semibold text-gray-300">Voice Settings</h3>
-        <VoiceSelector
-          voiceSettings={reelState.voiceSettings}
-          onVoiceChange={(newVoiceSettings) =>
-            setReelState(prev => ({
-              ...prev,
-              voiceSettings: newVoiceSettings
-            }))
-          }
-        />
+        <div className="relative">
+          {isRegeneratingVoices && (
+            <div className="absolute inset-0 flex items-center justify-center bg-gray-800/50 z-10">
+              <div className="text-white">Regenerating voices...</div>
+            </div>
+          )}
+          <VoiceSelector
+            voiceSettings={reelState.voiceSettings}
+            onVoiceChange={handleVoiceChange}
+          />
+        </div>
       </div>
 
       {/* Background Music */}

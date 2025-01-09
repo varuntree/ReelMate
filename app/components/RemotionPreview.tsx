@@ -25,7 +25,7 @@ export default function RemotionPreview({ reelState }: RemotionPreviewProps) {
   const fps = 30;
   const [audioDurations, setAudioDurations] = useState<{ [key: number]: number }>({});
 
-  // Load audio durations on mount
+  // Load audio durations when clips change
   useEffect(() => {
     const loadAudioDurations = async () => {
       const durations: { [key: number]: number } = {};
