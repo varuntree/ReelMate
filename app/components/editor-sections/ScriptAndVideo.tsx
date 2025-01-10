@@ -4,7 +4,7 @@
 import { useState, useEffect } from 'react';
 import { type ReelState } from '../../page';
 import { type GenerateReelContentResponse, type ReelTheme, type TextClip } from "@/app/types/api";
-import { searchPexelsVideos, type PexelsVideo } from '@/app/api/services/pexelsService';
+import { type PexelsVideo } from '@/app/api/services/pexelsService';
 import { FaVideo, FaSearch, FaPlay, FaPause } from 'react-icons/fa';
 
 interface ScriptAndVideoProps {
@@ -43,8 +43,18 @@ function VideoSearchModal({ isOpen, onClose, keywords, onVideoSelect }: VideoSea
   const handleSearch = async () => {
     setIsLoading(true);
     try {
-      const response = await searchPexelsVideos(searchQuery);
-      setVideos(response.videos);
+      const response = await fetch('/api/video/search', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ query: searchQuery }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to search videos');
+      }
+
+      const data = await response.json();
+      setVideos(data.videos);
     } catch (error) {
       console.error('Failed to search videos:', error);
     } finally {

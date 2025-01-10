@@ -12,7 +12,7 @@ const CheckIcon = ({ className }: { className?: string }) => {
       viewBox="0 0 24 24"
       strokeWidth={1.5}
       stroke="currentColor"
-      className={cn("w-6 h-6 ", className)}
+      className={cn("w-6 h-6", className)}
     >
       <path d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
     </svg>
@@ -25,7 +25,7 @@ const CheckFilled = ({ className }: { className?: string }) => {
       xmlns="http://www.w3.org/2000/svg"
       viewBox="0 0 24 24"
       fill="currentColor"
-      className={cn("w-6 h-6 ", className)}
+      className={cn("w-6 h-6", className)}
     >
       <path
         fillRule="evenodd"
@@ -63,22 +63,21 @@ const LoaderCore = ({
           >
             <div>
               {index > value && (
-                <CheckIcon className="text-text dark:text-white" />
+                <CheckIcon className="text-text/60" />
               )}
               {index <= value && (
                 <CheckFilled
                   className={cn(
-                    "text-text dark:text-white",
-                    value === index &&
-                      "text-accent dark:text-accent opacity-100"
+                    "text-text/60",
+                    value === index && "text-primary"
                   )}
                 />
               )}
             </div>
             <span
               className={cn(
-                "text-text dark:text-white",
-                value === index && "text-accent dark:text-accent opacity-100"
+                "text-text/60",
+                value === index && "text-primary"
               )}
             >
               {loadingState.text}
@@ -140,7 +139,7 @@ export const MultiStepLoader = ({
             <LoaderCore value={currentState} loadingStates={loadingStates} />
           </div>
 
-          <div className="bg-gradient-to-t inset-x-0 z-20 bottom-0 bg-background dark:bg-black h-full absolute [mask-image:radial-gradient(900px_at_center,transparent_30%,white)]" />
+          <div className="bg-gradient-to-t inset-x-0 z-20 bottom-0 bg-background h-full absolute [mask-image:radial-gradient(900px_at_center,transparent_30%,white)]" />
         </motion.div>
       )}
     </AnimatePresence>

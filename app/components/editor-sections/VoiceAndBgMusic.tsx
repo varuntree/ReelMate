@@ -3,7 +3,6 @@
 
 import { useState, useEffect } from 'react';
 import { type ReelState } from '../../page';
-import { searchFreesoundMusic } from '@/app/api/services/freesoundService';
 import { FaPlay, FaPause, FaMusic } from 'react-icons/fa';
 import VoiceSelector from './VoiceSelector';
 
@@ -102,9 +101,19 @@ export default function VoiceAndBgMusic({
   // Handle background music category change
   const handleBgMusicCategoryChange = async (category: string) => {
     try {
-      const response = await searchFreesoundMusic(category);
-      if (response.results.length > 0) {
-        const newBgMusicUrl = response.results[0].previews['preview-hq-mp3'];
+      const response = await fetch('/api/music/search', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ category }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch background music');
+      }
+
+      const musicResults = await response.json();
+      if (musicResults.results.length > 0) {
+        const newBgMusicUrl = musicResults.results[0].previews['preview-hq-mp3'];
         
         // Stop current audio if playing
         if (bgMusicAudio && isPlayingBgMusic) {

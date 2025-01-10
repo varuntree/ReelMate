@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Engine } from '@aws-sdk/client-polly';
 import { FaPlay, FaPause } from 'react-icons/fa';
 
@@ -14,24 +14,51 @@ interface VoiceSelectorProps {
   onVoiceChange: (settings: VoiceSettings) => void;
 }
 
-const VOICES = [
-  { id: 'Joey', name: 'Joey (Male)', engine: 'neural' as Engine },
-  { id: 'Matthew', name: 'Matthew (Male)', engine: 'neural' as Engine },
-  { id: 'Joanna', name: 'Joanna (Female)', engine: 'neural' as Engine },
-  { id: 'Kendra', name: 'Kendra (Female)', engine: 'neural' as Engine },
-  { id: 'Kimberly', name: 'Kimberly (Female)', engine: 'neural' as Engine },
-  { id: 'Salli', name: 'Salli (Female)', engine: 'neural' as Engine },
-  { id: 'Justin', name: 'Justin (Male)', engine: 'standard' as Engine },
-  { id: 'Kevin', name: 'Kevin (Male)', engine: 'standard' as Engine },
-];
+interface Voice {
+  id: string;
+  name: string;
+  engine: Engine;
+}
 
 export default function VoiceSelector({
   voiceSettings,
   onVoiceChange,
 }: VoiceSelectorProps) {
+  const [voices, setVoices] = useState<Voice[]>([]);
   const [previewAudio, setPreviewAudio] = useState<HTMLAudioElement | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [previewText] = useState("Hello! This is a sample voice preview.");
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchVoices = async () => {
+      try {
+        const response = await fetch('/api/voice/available');
+        if (!response.ok) {
+          throw new Error('Failed to fetch voices');
+        }
+        const data = await response.json();
+        
+        // Transform the data into the format we need
+        const voiceList: Voice[] = Object.entries(data).flatMap(([accent, voices]) => {
+          const voiceArray = voices as Array<{ id: string; gender: string }>;
+          return voiceArray.map(voice => ({
+            id: voice.id,
+            name: `${voice.id} (${voice.gender})`,
+            engine: 'neural' as Engine // Default to neural engine
+          }));
+        });
+        
+        setVoices(voiceList);
+      } catch (error) {
+        console.error('Failed to fetch voices:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchVoices();
+  }, []);
 
   const generatePreview = async (voiceId: string, engine: Engine) => {
     try {
@@ -80,10 +107,14 @@ export default function VoiceSelector({
     audio.play();
   };
 
+  if (isLoading) {
+    return <div className="text-center text-gray-400">Loading voices...</div>;
+  }
+
   return (
     <div className="space-y-4">
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4">
-        {VOICES.map((voice) => (
+        {voices.map((voice) => (
           <div
             key={voice.id}
             className={`flex flex-col items-center rounded-lg border p-3 ${
