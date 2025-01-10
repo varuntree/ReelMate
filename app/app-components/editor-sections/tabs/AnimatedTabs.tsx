@@ -27,30 +27,32 @@ export function AnimatedTabs({
   };
 
   return (
-    <div className="flex space-x-1 mb-4 overflow-x-auto pb-1">
+    <div className="relative flex w-full items-center gap-1 rounded-lg bg-gray-100/80 p-1">
       {tabs.map((tab) => (
         <button
           key={tab.id}
           onClick={() => handleTabChange(tab.id)}
           className={`
-            relative rounded-lg px-4 py-2 text-sm font-medium whitespace-nowrap
-            text-gray-300 outline-none transition
-            focus-visible:outline-2
-            ${activeTab === tab.id ? "" : "hover:text-white/80"}
+            relative z-10 flex-1 rounded-md px-3 py-1.5 text-sm font-medium 
+            transition-colors
+            ${activeTab === tab.id 
+              ? 'text-accent' 
+              : 'text-text hover:text-primary'
+            }
           `}
           style={{
             WebkitTapHighlightColor: "transparent",
           }}
         >
           {activeTab === tab.id && (
-            <motion.span
+            <motion.div
               layoutId="bubble"
-              className="absolute inset-0 z-10 bg-primary mix-blend-difference"
-              style={{ borderRadius: '8px' }}
+              className="absolute inset-0 z-0 bg-primary"
+              style={{ borderRadius: '6px' }}
               transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
             />
           )}
-          {tab.label}
+          <span className="relative z-10">{tab.label}</span>
         </button>
       ))}
     </div>

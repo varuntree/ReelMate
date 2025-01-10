@@ -7,7 +7,6 @@ import { SimpleTabsForNavigation } from '@/components/ui/simple-tabs-for-navigat
 import ScriptAndVideo from './editor-sections/ScriptAndVideo';
 import VoiceAndBgMusic from './editor-sections/VoiceAndBgMusic';
 import CaptionsAndStyle from './editor-sections/CaptionsAndStyle';
-import TextStyles from './editor-sections/TextStyles';
 import RemotionPreview from './RemotionPreview';
 
 interface MainEditorPageProps {
@@ -62,7 +61,7 @@ export default function MainEditorPage({
   return (
     <div className="flex flex-col lg:flex-row h-screen overflow-hidden bg-background">
       {/* Left Pane - Editor Sections */}
-      <div className="w-full lg:w-[60%] overflow-y-auto border-r border-gray-700 p-4">
+      <div className="w-full lg:w-[60%] overflow-y-auto border-r border-gray-200 p-4">
         <div className="mb-4 flex items-center justify-between">
           <h1 className="text-2xl font-bold text-text">Edit Reel</h1>
           <button
@@ -93,21 +92,17 @@ export default function MainEditorPage({
 
           {/* Section 3: Captions and Style (Combined) */}
           <TabsContent value="captions-style">
-            <div className="space-y-6">
-              <CaptionsAndStyle
-                reelState={reelState}
-                setReelState={setReelState}
-              />
-              <TextStyles
-                showText={reelState.showText}
-                setShowText={(show) => setReelState(prev => ({ ...prev, showText: show }))}
-                textStyle={reelState.textStyle}
-                onStyleChange={(style) => setReelState(prev => ({ ...prev, textStyle: { ...prev.textStyle, ...style } }))}
-                savedTemplates={reelState.savedTemplates}
-                onSaveTemplate={handleSaveTemplate}
-                onApplyTemplate={handleApplyTemplate}
-              />
-            </div>
+            <CaptionsAndStyle
+              reelState={reelState}
+              setReelState={setReelState}
+              showText={reelState.showText}
+              setShowText={(show) => setReelState(prev => ({ ...prev, showText: show }))}
+              textStyle={reelState.textStyle}
+              onStyleChange={(style) => setReelState(prev => ({ ...prev, textStyle: { ...prev.textStyle, ...style } }))}
+              savedTemplates={reelState.savedTemplates}
+              onSaveTemplate={handleSaveTemplate}
+              onApplyTemplate={handleApplyTemplate}
+            />
           </TabsContent>
         </SimpleTabsForNavigation>
       </div>
