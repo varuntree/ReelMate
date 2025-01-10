@@ -2,8 +2,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import PromptPage from './components/PromptPage';
-import MainEditorPage from './components/MainEditorPage';
+import PromptPage from './app-components/PromptPage';
+import MainEditorPage from './app-components/MainEditorPage';
 import { type ReelTheme, type TextClip, type ReelContent } from './types/api';
 import { Engine } from '@aws-sdk/client-polly';
 

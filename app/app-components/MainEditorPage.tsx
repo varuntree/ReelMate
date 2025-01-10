@@ -2,6 +2,8 @@
 'use client';
 
 import { type ReelState } from '../page';
+import { TabsContent } from "@/components/ui/tabs";
+import { SimpleTabsForNavigation } from '@/components/ui/simple-tabs-for-navigation';
 import ScriptAndVideo from './editor-sections/ScriptAndVideo';
 import VoiceAndBgMusic from './editor-sections/VoiceAndBgMusic';
 import CaptionsAndStyle from './editor-sections/CaptionsAndStyle';
@@ -58,53 +60,60 @@ export default function MainEditorPage({
   };
 
   return (
-    <div className="flex h-screen overflow-hidden bg-gray-900">
+    <div className="flex flex-col lg:flex-row h-screen overflow-hidden bg-background">
       {/* Left Pane - Editor Sections */}
-      <div className="w-[60%] overflow-y-auto border-r border-gray-700 p-4">
+      <div className="w-full lg:w-[60%] overflow-y-auto border-r border-gray-700 p-4">
         <div className="mb-4 flex items-center justify-between">
-          <h1 className="text-2xl font-bold text-white">Edit Reel</h1>
+          <h1 className="text-2xl font-bold text-text">Edit Reel</h1>
           <button
             onClick={handleCreateNewReel}
-            className="rounded bg-blue-600 px-4 py-2 text-white hover:bg-blue-700 transition-colors"
+            className="rounded bg-primary px-4 py-2 text-accent hover:bg-secondary transition-colors"
           >
             Create New Reel
           </button>
         </div>
-        <div className="space-y-6">
+
+        <SimpleTabsForNavigation>
           {/* Section 1: Script and Video */}
-          <ScriptAndVideo
-            reelState={reelState}
-            setReelState={setReelState}
-            onVideoSelect={handleVideoSelect}
-          />
+          <TabsContent value="script-video">
+            <ScriptAndVideo
+              reelState={reelState}
+              setReelState={setReelState}
+              onVideoSelect={handleVideoSelect}
+            />
+          </TabsContent>
 
           {/* Section 2: Voice and Background Music */}
-          <VoiceAndBgMusic
-            reelState={reelState}
-            setReelState={setReelState}
-          />
+          <TabsContent value="voice-music">
+            <VoiceAndBgMusic
+              reelState={reelState}
+              setReelState={setReelState}
+            />
+          </TabsContent>
 
-          {/* Section 3: Captions and Style */}
-          <CaptionsAndStyle
-            reelState={reelState}
-            setReelState={setReelState}
-          />
-
-          {/* Section 4: Text Styles */}
-          <TextStyles
-            showText={reelState.showText}
-            setShowText={(show) => setReelState(prev => ({ ...prev, showText: show }))}
-            textStyle={reelState.textStyle}
-            onStyleChange={(style) => setReelState(prev => ({ ...prev, textStyle: { ...prev.textStyle, ...style } }))}
-            savedTemplates={reelState.savedTemplates}
-            onSaveTemplate={handleSaveTemplate}
-            onApplyTemplate={handleApplyTemplate}
-          />
-        </div>
+          {/* Section 3: Captions and Style (Combined) */}
+          <TabsContent value="captions-style">
+            <div className="space-y-6">
+              <CaptionsAndStyle
+                reelState={reelState}
+                setReelState={setReelState}
+              />
+              <TextStyles
+                showText={reelState.showText}
+                setShowText={(show) => setReelState(prev => ({ ...prev, showText: show }))}
+                textStyle={reelState.textStyle}
+                onStyleChange={(style) => setReelState(prev => ({ ...prev, textStyle: { ...prev.textStyle, ...style } }))}
+                savedTemplates={reelState.savedTemplates}
+                onSaveTemplate={handleSaveTemplate}
+                onApplyTemplate={handleApplyTemplate}
+              />
+            </div>
+          </TabsContent>
+        </SimpleTabsForNavigation>
       </div>
 
       {/* Right Pane - Video Preview */}
-      <div className="w-[40%] overflow-y-auto bg-black p-4">
+      <div className="w-full lg:w-[40%] overflow-y-auto bg-black p-4">
         <div className="sticky top-4">
           <RemotionPreview reelState={reelState} />
         </div>

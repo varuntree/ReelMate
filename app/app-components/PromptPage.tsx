@@ -3,9 +3,9 @@
 
 import { useState } from 'react';
 import { type GenerateReelContentResponse, type ReelContent } from '@/app/types/api';
-import { PlaceholdersAndVanishInput } from '@/app/components/ui/placeholders-and-vanish-input';
-import { FlipWords } from '@/app/components/ui/flip-words';
-import { MultiStepLoader } from '@/app/components/ui/multi-step-loader';
+import { PlaceholdersAndVanishInput } from '@/app/app-components/ui/placeholders-and-vanish-input';
+import { FlipWords } from '@/app/app-components/ui/flip-words';
+import { MultiStepLoader } from '@/app/app-components/ui/multi-step-loader';
 
 interface PromptPageProps {
   onSubmit: (prompt: string, content: ReelContent, bgMusicUrl: string | null) => Promise<void>;
