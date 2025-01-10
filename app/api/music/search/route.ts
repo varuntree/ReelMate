@@ -16,8 +16,17 @@ export async function POST(request: Request) {
     return NextResponse.json(musicResults);
   } catch (error) {
     console.error('Error searching music:', error);
+    
+    // Check if error is due to missing API key
+    if (error instanceof Error && error.message === 'Freesound API key is not configured') {
+      return NextResponse.json(
+        { error: 'Freesound API key is not configured. Please set NEXT_PUBLIC_FREESOUND_API_KEY in your environment variables.' },
+        { status: 500 }
+      );
+    }
+
     return NextResponse.json(
-      { error: 'Failed to search music' },
+      { error: 'Failed to search music. Please try again later.' },
       { status: 500 }
     );
   }

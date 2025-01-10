@@ -1,11 +1,12 @@
 // Component for managing script generation and video selection
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { type ReelState } from '../../page';
 import { type GenerateReelContentResponse, type ReelTheme, type TextClip } from "@/app/types/api";
 import { type PexelsVideo } from '@/app/api/services/pexelsService';
-import { FaVideo, FaSearch, FaPlay, FaPause } from 'react-icons/fa';
+import { FaVideo, FaSearch, FaPlay, FaPause, FaTrash, FaPlus } from 'react-icons/fa';
+import { Expandable } from '@/components/ui/expandable';
 
 interface ScriptAndVideoProps {
   reelState: ReelState;
@@ -120,6 +121,31 @@ function VideoSearchModal({ isOpen, onClose, keywords, onVideoSelect }: VideoSea
         </button>
       </div>
     </div>
+  );
+}
+
+function AutoGrowTextArea({ value, onChange, className = '' }: { 
+  value: string; 
+  onChange: (value: string) => void;
+  className?: string;
+}) {
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  useEffect(() => {
+    if (textareaRef.current) {
+      textareaRef.current.style.height = 'auto';
+      textareaRef.current.style.height = textareaRef.current.scrollHeight + 'px';
+    }
+  }, [value]);
+
+  return (
+    <textarea
+      ref={textareaRef}
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      className={`w-full resize-none rounded-lg border border-gray-200 bg-white p-2 text-text focus:outline-none focus:ring-1 focus:ring-primary ${className}`}
+      rows={1}
+    />
   );
 }
 
@@ -238,57 +264,112 @@ export default function ScriptAndVideo({
     }
   };
 
-  return (
-    <section className="rounded-lg bg-gray-800 p-6">
-      <h2 className="mb-4 text-xl font-bold text-white">Script and Video</h2>
-      
-      {/* Clip List */}
-      <div className="space-y-4">
-        {reelState.clips.map((clip, index) => (
-          <div
-            key={index}
-            className="rounded-lg border border-gray-700 bg-gray-900 p-4"
+  const handleDeleteClip = (index: number) => {
+    setReelState((prev) => ({
+      ...prev,
+      clips: prev.clips.filter((_, i) => i !== index),
+    }));
+  };
+
+  const handleAddClip = () => {
+    const firstClipVideo = reelState.clips[0]?.video;
+    const newClip: TextClip = {
+      text: '',
+      video: firstClipVideo,
+      videoKeywords: [],
+      voiceAudio: undefined,
+      duration: firstClipVideo?.duration || 0,
+    };
+    
+    setReelState((prev) => ({
+      ...prev,
+      clips: [
+        ...prev.clips.slice(0, -1),
+        newClip,
+        prev.clips[prev.clips.length - 1],
+      ],
+    }));
+  };
+
+  const renderClip = (clip: TextClip, index: number, isMiddleClip: boolean = false) => (
+    <div key={index} className="rounded-lg bg-white p-4 shadow-sm">
+      <div className="mb-2 flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <span className="text-sm font-medium text-text">
+            Clip {index + 1}
+          </span>
+          {clip.voiceAudio && (
+            <button
+              onClick={() => toggleAudioPlayback(index)}
+              className="rounded bg-background p-1 text-text hover:bg-background/80"
+            >
+              {playingAudioIndex === index ? <FaPause /> : <FaPlay />}
+            </button>
+          )}
+        </div>
+        <div className="flex items-center gap-2">
+          {isMiddleClip && (
+            <button
+              onClick={() => handleDeleteClip(index)}
+              className="flex items-center gap-1 rounded-lg bg-red-500 px-2 py-1 text-sm text-white hover:bg-red-600 transition-colors"
+            >
+              <FaTrash className="text-xs" />
+            </button>
+          )}
+          <button
+            onClick={() => {
+              setSelectedClipIndex(index);
+              setIsVideoModalOpen(true);
+            }}
+            className="flex items-center gap-1 rounded-lg bg-primary px-3 py-1 text-sm text-white hover:bg-secondary transition-colors"
           >
-            <div className="mb-2 flex items-center gap-2">
-              <span className="text-sm font-medium text-gray-400">
-                Clip {index + 1}
-              </span>
-              {clip.voiceAudio && (
-                <button
-                  onClick={() => toggleAudioPlayback(index)}
-                  className="rounded bg-gray-700 p-1 text-white hover:bg-gray-600"
-                >
-                  {playingAudioIndex === index ? <FaPause /> : <FaPlay />}
-                </button>
-              )}
-            </div>
-            
-            <textarea
-              value={clip.text}
-              onChange={(e) => handleClipTextChange(index, e.target.value)}
-              className="mb-2 w-full rounded border border-gray-700 bg-gray-800 p-2 text-white"
-              rows={2}
-            />
-            
-            <div className="flex items-center gap-2">
+            <FaVideo className="text-xs" />
+            {clip.video ? 'Change Video' : 'Select Video'}
+          </button>
+        </div>
+      </div>
+      
+      <AutoGrowTextArea
+        value={clip.text}
+        onChange={(newText) => handleClipTextChange(index, newText)}
+      />
+    </div>
+  );
+
+  return (
+    <section className="rounded-lg bg-background p-6">
+      <h2 className="mb-4 text-xl font-bold text-text">Script and Video</h2>
+      
+      <div className="space-y-4">
+        {/* First Clip */}
+        {reelState.clips.length > 0 && renderClip(reelState.clips[0], 0)}
+        
+        {/* Middle Clips */}
+        {reelState.clips.length > 2 && (
+          <Expandable 
+            title="Middle Clips"
+            footer={
               <button
-                onClick={() => {
-                  setSelectedClipIndex(index);
-                  setIsVideoModalOpen(true);
-                }}
-                className="flex items-center gap-1 rounded bg-blue-600 px-3 py-1 text-sm text-white hover:bg-blue-700"
+                onClick={handleAddClip}
+                className="flex items-center gap-2 rounded-lg bg-primary px-3 py-1 text-sm text-white hover:bg-secondary transition-colors"
               >
-                <FaVideo className="text-xs" />
-                {clip.video ? 'Change Video' : 'Select Video'}
+                <FaPlus className="text-xs" />
+                Add Clip
               </button>
-              {clip.video && (
-                <span className="text-sm text-gray-400">
-                  Video ID: {clip.video.id}
-                </span>
+            }
+          >
+            <div className="space-y-4">
+              {reelState.clips.slice(1, -1).map((clip, idx) => 
+                renderClip(clip, idx + 1, true)
               )}
             </div>
-          </div>
-        ))}
+          </Expandable>
+        )}
+        
+        {/* Last Clip */}
+        {reelState.clips.length > 1 && 
+          renderClip(reelState.clips[reelState.clips.length - 1], reelState.clips.length - 1)
+        }
       </div>
 
       {/* Video Search Modal */}

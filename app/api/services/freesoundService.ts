@@ -1,6 +1,6 @@
-import axios from 'axios';
+import axios, { AxiosError } from 'axios';
 
-const FREESOUND_API_KEY = process.env['NEXT_PUBLIC_FREESOUND_API_KEY'];
+const FREESOUND_API_KEY = process.env['FREESOUND_API_KEY'];
 const FREESOUND_API_URL = 'https://freesound.org/apiv2';
 
 export interface FreesoundTrack {
@@ -52,6 +52,15 @@ export async function searchFreesoundMusic(
 
     return response.data;
   } catch (error) {
+    if (error instanceof AxiosError) {
+      if (error.response?.status === 401) {
+        throw new Error('Invalid Freesound API key');
+      }
+      if (error.response?.status === 429) {
+        throw new Error('Rate limit exceeded. Please try again later.');
+      }
+      throw new Error(`Freesound API Error: ${error.response?.data?.detail || error.message}`);
+    }
     console.error('Freesound API Error:', error);
     throw new Error('Failed to fetch music from Freesound');
   }

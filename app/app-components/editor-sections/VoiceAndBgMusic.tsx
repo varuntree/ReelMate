@@ -1,23 +1,34 @@
-// Component for managing voice and background music settings
 'use client';
 
 import { useState, useEffect } from 'react';
 import { type ReelState } from '../../page';
-import { FaPlay, FaPause, FaMusic } from 'react-icons/fa';
-import VoiceSelector from './VoiceSelector';
+import { type FreesoundTrack } from '@/app/api/services/freesoundService';
+import { AnimatedTabs } from './tabs/AnimatedTabs';
+import VoiceSettings from './tabs/VoiceSettings';
+import BackgroundMusic from './tabs/BackgroundMusic';
 
 interface VoiceAndBgMusicProps {
   reelState: ReelState;
   setReelState: React.Dispatch<React.SetStateAction<ReelState>>;
 }
 
+const tabs = [
+  { id: 'voice', label: 'Voice Settings' },
+  { id: 'music', label: 'Background Music' },
+];
+
 export default function VoiceAndBgMusic({
   reelState,
   setReelState,
 }: VoiceAndBgMusicProps) {
+  const [activeTab, setActiveTab] = useState(tabs[0].id);
   const [isPlayingBgMusic, setIsPlayingBgMusic] = useState(false);
   const [bgMusicAudio, setBgMusicAudio] = useState<HTMLAudioElement | null>(null);
   const [isRegeneratingVoices, setIsRegeneratingVoices] = useState(false);
+  const [musicResults, setMusicResults] = useState<FreesoundTrack[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [playingMusicId, setPlayingMusicId] = useState<number | null>(null);
+  const [previewAudio, setPreviewAudio] = useState<HTMLAudioElement | null>(null);
 
   // Load initial background music
   useEffect(() => {
@@ -101,6 +112,7 @@ export default function VoiceAndBgMusic({
   // Handle background music category change
   const handleBgMusicCategoryChange = async (category: string) => {
     try {
+      setIsLoading(true);
       const response = await fetch('/api/music/search', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -112,94 +124,100 @@ export default function VoiceAndBgMusic({
       }
 
       const musicResults = await response.json();
-      if (musicResults.results.length > 0) {
-        const newBgMusicUrl = musicResults.results[0].previews['preview-hq-mp3'];
-        
-        // Stop current audio if playing
-        if (bgMusicAudio && isPlayingBgMusic) {
-          bgMusicAudio.pause();
-          setIsPlayingBgMusic(false);
-        }
-
-        // Create new audio element
-        const newAudio = new Audio(newBgMusicUrl);
-        newAudio.loop = true;
-        setBgMusicAudio(newAudio);
-        
-        // Update state
-        setReelState(prev => ({
-          ...prev,
-          bgMusic: newBgMusicUrl
-        }));
-      }
+      setMusicResults(musicResults.results);
     } catch (error) {
       console.error('Failed to fetch background music:', error);
+    } finally {
+      setIsLoading(false);
     }
   };
 
+  // Handle music preview
+  const toggleMusicPreview = (music: FreesoundTrack) => {
+    if (previewAudio) {
+      previewAudio.pause();
+      if (playingMusicId === music.id) {
+        setPlayingMusicId(null);
+        return;
+      }
+    }
+
+    const audio = new Audio(music.previews['preview-hq-mp3']);
+    audio.addEventListener('ended', () => setPlayingMusicId(null));
+    setPreviewAudio(audio);
+    setPlayingMusicId(music.id);
+    audio.play();
+  };
+
+  // Handle music selection
+  const selectBackgroundMusic = (music: FreesoundTrack) => {
+    // Stop any playing preview
+    if (previewAudio) {
+      previewAudio.pause();
+      setPlayingMusicId(null);
+    }
+
+    // Stop current background music if playing
+    if (bgMusicAudio && isPlayingBgMusic) {
+      bgMusicAudio.pause();
+      setIsPlayingBgMusic(false);
+    }
+
+    // Update state with new music
+    setReelState(prev => ({
+      ...prev,
+      bgMusic: music.previews['preview-hq-mp3']
+    }));
+
+    // Create new audio element for background music
+    const newAudio = new Audio(music.previews['preview-hq-mp3']);
+    newAudio.loop = true;
+    setBgMusicAudio(newAudio);
+  };
+
+  // Cleanup audio on unmount
+  useEffect(() => {
+    return () => {
+      if (previewAudio) {
+        previewAudio.pause();
+      }
+      if (bgMusicAudio) {
+        bgMusicAudio.pause();
+      }
+    };
+  }, [previewAudio, bgMusicAudio]);
+
   return (
-    <section className="rounded-lg bg-gray-800 p-6">
-      <h2 className="mb-4 text-xl font-bold text-white">Voice and Background Music</h2>
+    <section className="rounded-lg bg-white p-4 sm:p-6 border border-primary/20">
+      <h2 className="mb-4 text-xl font-bold text-text">Voice and Background Music</h2>
       
-      {/* Voice Settings */}
-      <div className="mb-6">
-        <h3 className="mb-2 text-lg font-semibold text-gray-300">Voice Settings</h3>
-        <div className="relative">
-          {isRegeneratingVoices && (
-            <div className="absolute inset-0 flex items-center justify-center bg-gray-800/50 z-10">
-              <div className="text-white">Regenerating voices...</div>
-            </div>
-          )}
-          <VoiceSelector
-            voiceSettings={reelState.voiceSettings}
+      <AnimatedTabs 
+        tabs={tabs} 
+        defaultTab={activeTab} 
+        onChange={setActiveTab}
+      />
+
+      <div className="mt-4">
+        {activeTab === 'voice' ? (
+          <VoiceSettings
+            reelState={reelState}
+            setReelState={setReelState}
+            isRegeneratingVoices={isRegeneratingVoices}
             onVoiceChange={handleVoiceChange}
           />
-        </div>
-      </div>
-
-      {/* Background Music */}
-      <div>
-        <h3 className="mb-2 text-lg font-semibold text-gray-300">Background Music</h3>
-        
-        {/* Music Categories */}
-        <div className="mb-4 grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4">
-          {[
-            'ambient',
-            'upbeat',
-            'cinematic',
-            'electronic',
-            'acoustic',
-            'inspirational',
-            'energetic',
-            'relaxing',
-            'dramatic',
-            'happy'
-          ].map((category) => (
-            <button
-              key={category}
-              onClick={() => handleBgMusicCategoryChange(category)}
-              className="rounded bg-gray-700 px-3 py-2 text-sm text-white hover:bg-gray-600"
-            >
-              {category.charAt(0).toUpperCase() + category.slice(1)}
-            </button>
-          ))}
-        </div>
-
-        {/* Music Controls */}
-        {reelState.bgMusic && (
-          <div className="flex items-center gap-4">
-            <button
-              onClick={toggleBgMusic}
-              className="flex items-center gap-2 rounded bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
-            >
-              {isPlayingBgMusic ? <FaPause /> : <FaPlay />}
-              <span>{isPlayingBgMusic ? 'Pause' : 'Play'} Music</span>
-            </button>
-            <span className="text-sm text-gray-400">
-              <FaMusic className="mr-1 inline" />
-              Background Music Selected
-            </span>
-          </div>
+        ) : (
+          <BackgroundMusic
+            reelState={reelState}
+            setReelState={setReelState}
+            musicResults={musicResults}
+            isLoading={isLoading}
+            playingMusicId={playingMusicId}
+            isPlayingBgMusic={isPlayingBgMusic}
+            onCategorySelect={handleBgMusicCategoryChange}
+            onMusicPreview={toggleMusicPreview}
+            onMusicSelect={selectBackgroundMusic}
+            onBgMusicToggle={toggleBgMusic}
+          />
         )}
       </div>
     </section>
