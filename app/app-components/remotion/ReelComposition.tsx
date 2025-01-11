@@ -13,9 +13,13 @@ import {
 import { type ReelState } from '../../page';
 import { TIMING, VIDEO_CONFIG } from './utils';
 import { getTransitionStyle, getTextStyle } from './animations';
+import { DraggableText } from './Draggable';
+import { type TextClip } from '../../types/api';
 
 interface ReelCompositionProps {
   reelState: ReelState;
+  updateClip: (clipIndex: number, updater: (clip: TextClip) => TextClip) => void;
+  setReelState: React.Dispatch<React.SetStateAction<ReelState>>;
 }
 
 // Word animation component
@@ -65,7 +69,7 @@ const AnimatedWord: React.FC<AnimatedWordProps> = ({ word, startFrame, duration,
   );
 };
 
-export default function ReelComposition({ reelState }: ReelCompositionProps) {
+export default function ReelComposition({ reelState, updateClip, setReelState }: ReelCompositionProps) {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
 
@@ -131,38 +135,12 @@ export default function ReelComposition({ reelState }: ReelCompositionProps) {
 
             {/* Clip Text Overlay */}
             {clip.text && reelState.showText && (
-              <div
-                style={{
-                  position: 'absolute',
-                  left: '50%',
-                  top: '85%',
-                  transform: 'translate(-50%, -50%)',
-                  width: '90%',
-                  textAlign: reelState.textStyle.align,
-                  display: 'flex',
-                  flexWrap: 'wrap',
-                  justifyContent: reelState.textStyle.align === 'left' ? 'flex-start' :
-                                reelState.textStyle.align === 'right' ? 'flex-end' : 'center',
-                  alignItems: 'center',
-                  gap: '8px',
-                }}
-              >
-                {clip.text.split(' ').map((word, wordIndex) => {
-                  const wordsPerSecond = 2;
-                  const framesPerWord = fps / wordsPerSecond;
-                  const wordStartFrame = wordIndex * framesPerWord;
-
-                  return (
-                    <AnimatedWord
-                      key={wordIndex}
-                      word={word}
-                      startFrame={wordStartFrame}
-                      duration={framesPerWord}
-                      style={getTextStyle(reelState.textStyle)}
-                    />
-                  );
-                })}
-              </div>
+              <DraggableText
+                clipIndex={index}
+                clip={clip}
+                reelState={reelState}
+                updateClip={updateClip}
+              />
             )}
           </Sequence>
         );
@@ -177,4 +155,4 @@ export default function ReelComposition({ reelState }: ReelCompositionProps) {
       )}
     </AbsoluteFill>
   );
-}    
+}

@@ -66,8 +66,8 @@ export const getTransitionStyle = (
 // Get text style based on text configuration
 export const getTextStyle = (textStyle: any) => ({
   color: textStyle.color,
-  fontSize: textStyle.size === 'small' ? '2rem' : 
-           textStyle.size === 'medium' ? '2.5rem' : '3rem',
+  fontSize: textStyle.size === 'small' ? '3rem' : 
+           textStyle.size === 'medium' ? '4rem' : '5rem',
   fontWeight: textStyle.fontWeight,
   fontFamily: textStyle.fontFamily,
   textDecoration: textStyle.underline ? 'underline' : 'none',

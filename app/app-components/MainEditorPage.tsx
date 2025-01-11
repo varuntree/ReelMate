@@ -110,7 +110,7 @@ export default function MainEditorPage({
       {/* Right Pane - Video Preview */}
       <div className="w-full lg:w-[40%] overflow-y-auto bg-black p-4">
         <div className="sticky top-4">
-          <RemotionPreview reelState={reelState} />
+          <RemotionPreview reelState={reelState} setReelState={setReelState} />
         </div>
       </div>
     </div>

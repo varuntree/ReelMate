@@ -26,17 +26,23 @@ export type BgMusicCategory =
   | 'dramatic'
   | 'happy';
 
-export interface TextClip {
-  text: string;
-  duration: number; // in seconds
-  videoKeywords: string[]; // keywords for Pixabay video search
-  video?: {
-    id: number;
-    url: string;
-    duration: number;
-  };
-  voiceAudio?: string; // base64 audio data URL
-}
+
+  export interface TextClip {
+    text: string;
+    duration: number; // in seconds
+    videoKeywords: string[]; // keywords for Pixabay video search
+    video?: {
+      id: number;
+      url: string;
+      duration: number;
+    };
+    voiceAudio?: string; // base64 audio data URL
+    textStyle?: {
+      // Add text style properties for position
+      left: number;
+      top: number;
+    };
+  }
 
 export interface ReelContent {
   theme: ReelTheme;

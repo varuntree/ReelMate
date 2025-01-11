@@ -5,13 +5,15 @@ import { Player, PlayerRef } from '@remotion/player';
 import { type ReelState } from '../page';
 import ReelComposition from './remotion/ReelComposition';
 import { VIDEO_CONFIG, loadAudioDurations, calculateDurationInFrames } from './remotion/utils';
+import { type TextClip } from '../types/api';
 import { PlayPauseButton } from './remotion/PlayPauseButton';
 
 interface RemotionPreviewProps {
   reelState: ReelState;
+  setReelState: React.Dispatch<React.SetStateAction<ReelState>>;
 }
 
-export default function RemotionPreview({ reelState }: RemotionPreviewProps) {
+export default function RemotionPreview({ reelState, setReelState }: RemotionPreviewProps) {
   const [audioDurations, setAudioDurations] = useState<{ [key: number]: number }>({});
   const playerRef = useRef<PlayerRef>(null);
 
@@ -28,6 +30,15 @@ export default function RemotionPreview({ reelState }: RemotionPreviewProps) {
 
   // Don't render player until we have at least one clip with video
   const hasVideoContent = reelState.clips.some((clip) => clip.video);
+
+  const updateClip = (clipIndex: number, updater: (clip: TextClip) => TextClip) => {
+    setReelState((prevReelState) => ({
+      ...prevReelState,
+      clips: prevReelState.clips.map((clip, index) =>
+        index === clipIndex ? updater(clip) : clip
+      ),
+    }));
+  };
 
   return (
     <div className="flex h-full w-full flex-col">
@@ -61,7 +72,7 @@ export default function RemotionPreview({ reelState }: RemotionPreviewProps) {
                 }}
                 controls={false}
                 loop
-                inputProps={{ reelState }}
+                inputProps={{ reelState, updateClip, setReelState }}
               />
             ) : (
               <div className="flex h-full items-center justify-center text-gray-500">
