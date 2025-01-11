@@ -46,20 +46,6 @@ export interface ReelState {
       fontFamily: string;
     };
   }>;
-  overlayText: Array<{
-    id: string;
-    text: string;
-    position: { x: number; y: number };
-    style: {
-      fontSize: number;
-      color: string;
-      fontFamily: string;
-    };
-  }>;
-  logo?: {
-    url: string;
-    position: { x: number; y: number };
-  };
   transition: 'fade' | 'slide' | 'zoom' | 'wipe' | 'dissolve' | 'blur';
 }
 
@@ -72,7 +58,6 @@ const defaultReelState: ReelState = {
     engine: 'neural',
   },
   bgMusic: null,
-  overlayText: [],
   clips: [],
   transition: 'fade',
   showText: true,

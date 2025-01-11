@@ -164,58 +164,6 @@ export default function ReelComposition({ reelState }: ReelCompositionProps) {
                 })}
               </div>
             )}
-
-            {/* Global Text Overlays */}
-            {reelState.overlayText.map((overlay) => {
-              const opacity = spring({
-                fps,
-                frame: relativeFrame,
-                config: {
-                  damping: 200,
-                },
-                durationInFrames: 20,
-              });
-
-              return (
-                <div
-                  key={overlay.id}
-                  style={{
-                    position: 'absolute',
-                    left: `${overlay.position.x}%`,
-                    top: `${overlay.position.y}%`,
-                    transform: 'translate(-50%, -50%)',
-                    opacity,
-                    ...getTextStyle(overlay.style),
-                  }}
-                >
-                  {overlay.text}
-                </div>
-              );
-            })}
-
-            {/* Logo Overlay */}
-            {reelState.logo && (
-              <img
-                src={reelState.logo.url}
-                alt="Logo"
-                style={{
-                  position: 'absolute',
-                  left: `${reelState.logo.position.x}%`,
-                  top: `${reelState.logo.position.y}%`,
-                  transform: 'translate(-50%, -50%)',
-                  maxWidth: '20%',
-                  maxHeight: '20%',
-                  opacity: spring({
-                    fps,
-                    frame: relativeFrame,
-                    config: {
-                      damping: 200,
-                    },
-                    durationInFrames: 20,
-                  }),
-                }}
-              />
-            )}
           </Sequence>
         );
       })}

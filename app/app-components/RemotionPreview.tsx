@@ -1,10 +1,11 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
-import { Player } from '@remotion/player';
+import { useEffect, useMemo, useState, useRef } from 'react';
+import { Player, PlayerRef } from '@remotion/player';
 import { type ReelState } from '../page';
 import ReelComposition from './remotion/ReelComposition';
 import { VIDEO_CONFIG, loadAudioDurations, calculateDurationInFrames } from './remotion/utils';
+import { PlayPauseButton } from './remotion/PlayPauseButton';
 
 interface RemotionPreviewProps {
   reelState: ReelState;
@@ -12,6 +13,7 @@ interface RemotionPreviewProps {
 
 export default function RemotionPreview({ reelState }: RemotionPreviewProps) {
   const [audioDurations, setAudioDurations] = useState<{ [key: number]: number }>({});
+  const playerRef = useRef<PlayerRef>(null);
 
   // Load audio durations when clips change
   useEffect(() => {
@@ -19,19 +21,19 @@ export default function RemotionPreview({ reelState }: RemotionPreviewProps) {
   }, [reelState.clips]);
 
   // Calculate total duration based on audio durations
-  const durationInFrames = useMemo(() => 
-    calculateDurationInFrames(reelState.clips, audioDurations),
+  const durationInFrames = useMemo(
+    () => calculateDurationInFrames(reelState.clips, audioDurations),
     [reelState.clips, audioDurations]
   );
 
   // Don't render player until we have at least one clip with video
-  const hasVideoContent = reelState.clips.some(clip => clip.video);
+  const hasVideoContent = reelState.clips.some((clip) => clip.video);
 
   return (
     <div className="flex h-full w-full flex-col">
       <div className="mb-4 flex items-center justify-between">
-        <h2 className="text-xl font-bold text-white">Preview</h2>
-        <button className="rounded bg-blue-600 px-4 py-2 text-white hover:bg-blue-700">
+        <h2 className="text-xl font-bold text-text">Preview</h2>
+        <button className="rounded bg-primary px-4 py-2 text-accent hover:bg-secondary">
           Export Reel
         </button>
       </div>
@@ -42,11 +44,12 @@ export default function RemotionPreview({ reelState }: RemotionPreviewProps) {
         <div className="relative mx-auto overflow-hidden rounded-[3rem] border-[14px] border-gray-900 bg-white shadow-xl">
           {/* Notch */}
           <div className="absolute left-1/2 top-0 z-10 h-6 w-40 -translate-x-1/2 rounded-b-3xl bg-black"></div>
-          
+
           {/* Video Preview */}
           <div className="relative aspect-[390/844] w-full overflow-hidden bg-black">
             {hasVideoContent ? (
               <Player
+                ref={playerRef}
                 component={ReelComposition}
                 durationInFrames={durationInFrames}
                 fps={VIDEO_CONFIG.fps}
@@ -56,7 +59,7 @@ export default function RemotionPreview({ reelState }: RemotionPreviewProps) {
                   width: '100%',
                   height: '100%',
                 }}
-                controls
+                controls={false}
                 loop
                 inputProps={{ reelState }}
               />
@@ -76,8 +79,12 @@ export default function RemotionPreview({ reelState }: RemotionPreviewProps) {
             </span>
             <span>Size: 9:16 (1080x1920)</span>
           </div>
+          {/* Play/Pause Button */}
+          <div className="flex justify-center">
+            <PlayPauseButton playerRef={playerRef} />
+          </div>
         </div>
       </div>
     </div>
   );
-} 
+}

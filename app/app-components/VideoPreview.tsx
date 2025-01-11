@@ -9,80 +9,45 @@ interface VideoPreviewProps {
 }
 
 export default function VideoPreview({ reelState }: VideoPreviewProps) {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const videoRef = useRef<HTMLVideoElement>(null);
   const [currentClipIndex, setCurrentClipIndex] = useState(0);
-
-  // Update video source when current clip changes
-  useEffect(() => {
-    if (videoRef.current && reelState.clips[currentClipIndex]?.video) {
-      videoRef.current.src = reelState.clips[currentClipIndex].video!.url;
-    }
-  }, [currentClipIndex, reelState.clips]);
+  const currentClip = reelState.clips[currentClipIndex];
 
   return (
-    <div className="h-full w-full">
-      <div className="mb-4 flex items-center justify-between">
-        <h2 className="text-xl font-bold text-white">Preview</h2>
-        <button className="rounded bg-blue-600 px-4 py-2 text-white hover:bg-blue-700">
-          Export Reel
-        </button>
-      </div>
-
+    <div>
       {/* Video Preview Container */}
-      <div
-        ref={containerRef}
-        className="relative aspect-[9/16] w-full overflow-hidden rounded-lg bg-black"
-      >
-        {/* Video Element */}
-        {reelState.clips[currentClipIndex]?.video ? (
+      <div className="relative aspect-[9/16] w-full overflow-hidden rounded-lg bg-black">
+        {/* Video Background */}
+        {currentClip?.video && (
           <video
-            ref={videoRef}
-            className="h-full w-full object-contain"
-            controls
+            src={currentClip.video.url}
+            className="absolute inset-0 h-full w-full object-cover"
+            autoPlay
             loop
-          >
-            <source src={reelState.clips[currentClipIndex].video!.url} type="video/mp4" />
-            Your browser does not support the video tag.
-          </video>
-        ) : (
-          <div className="flex h-full items-center justify-center text-gray-500">
-            No video selected
-          </div>
+            muted
+            playsInline
+          />
         )}
 
-        {/* Text Overlays */}
-        {reelState.overlayText.map((overlay) => (
+        {/* Text Overlay */}
+        {currentClip?.text && reelState.showText && (
           <div
-            key={overlay.id}
             style={{
               position: 'absolute',
-              left: `${overlay.position.x}%`,
-              top: `${overlay.position.y}%`,
+              left: '50%',
+              top: '85%',
               transform: 'translate(-50%, -50%)',
-              color: overlay.style.color,
-              fontSize: `${overlay.style.fontSize}px`,
-              fontFamily: overlay.style.fontFamily,
+              width: '90%',
+              textAlign: reelState.textStyle.align,
+              color: reelState.textStyle.color,
+              fontWeight: reelState.textStyle.fontWeight,
+              fontFamily: reelState.textStyle.fontFamily,
+              textDecoration: reelState.textStyle.underline ? 'underline' : 'none',
+              fontSize: reelState.textStyle.size === 'small' ? '1rem' :
+                       reelState.textStyle.size === 'medium' ? '1.25rem' : '1.5rem',
             }}
           >
-            {overlay.text}
+            {currentClip.text}
           </div>
-        ))}
-
-        {/* Logo Overlay */}
-        {reelState.logo && (
-          <img
-            src={reelState.logo.url}
-            alt="Logo"
-            style={{
-              position: 'absolute',
-              left: `${reelState.logo.position.x}%`,
-              top: `${reelState.logo.position.y}%`,
-              transform: 'translate(-50%, -50%)',
-              maxWidth: '20%',
-              maxHeight: '20%',
-            }}
-          />
         )}
       </div>
 
