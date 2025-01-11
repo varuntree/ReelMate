@@ -23,9 +23,15 @@ export default {
         primary: '#0000a7',
         secondary: '#1468cf',
         accent: '#ffffff',
+        color1: "hsl(var(--color-1))",
+        color2 : "hsl(var(--color-2))",
+        color3: "hsl(var(--color-3))",
+        color4: "hsl(var(--color-4))",
+        color5: "hsl(var(--color-5))",
       },
       animation: {
         aurora: "aurora 60s linear infinite",
+        rainbow: "rainbow var(--speed, 2s) infinite linear",
       },
       keyframes: {
         aurora: {
@@ -35,6 +41,10 @@ export default {
           to: {
             backgroundPosition: "350% 50%, 350% 50%",
           },
+        },
+        rainbow: {
+          "0%": { "background-position": "0%" },
+          "100%": { "background-position": "200%" },
         },
       },
     },

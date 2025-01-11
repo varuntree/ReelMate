@@ -4,6 +4,7 @@
 import { useState, useEffect } from 'react';
 import PromptPage from './app-components/PromptPage';
 import MainEditorPage from './app-components/MainEditorPage';
+import Navbar from './app-components/Navbar';
 import { type ReelTheme, type TextClip, type ReelContent } from './types/api';
 import { Engine } from '@aws-sdk/client-polly';
 
@@ -164,7 +165,10 @@ export default function Home() {
   return (
     <main className="min-h-screen">
       {!reelState.prompt ? (
-        <PromptPage onSubmit={handlePromptSubmit} />
+        <>
+          <Navbar />
+          <PromptPage onSubmit={handlePromptSubmit} />
+        </>
       ) : (
         <MainEditorPage reelState={reelState} setReelState={setReelState} />
       )}
