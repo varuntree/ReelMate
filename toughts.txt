@@ -1,0 +1,2 @@
+in the scipt and video, when the text is changed, the voice audio is generated but the bounce is not
+being handled properly. create a logic to handle the bounce.

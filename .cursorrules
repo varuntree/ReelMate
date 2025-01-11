@@ -24,6 +24,14 @@ To create a seamless, AI-driven solution for generating and customizing engaging
 Code Organization
 Use a Modular Structure
 Organize the code by feature or functionality. Each module should have a specific responsibility.
+Always write and use the mobile friendly code.
+
+alwys follow the theme that is defined in the tailwind.config.ts file:
+text: '#09090a',
+background: '#f5f5f9',
+primary: '#0000a7', // for buttons and links
+secondary: '#1468cf', // for hover effects
+accent: '#ffffff' // for cards
 
 Folder Structure Example:
 

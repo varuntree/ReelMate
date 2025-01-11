@@ -6,7 +6,12 @@ import {
 } from '@/app/types/api';
 
 // Initialize the Gemini API client
-const genAI = new GoogleGenerativeAI(process.env['GOOGLE_GEMINI_API_KEY'] || '');
+const GEMINI_API_KEY = process.env['GEMINI_API_KEY'];
+if (!GEMINI_API_KEY) {
+  console.error('GOOGLE_GEMINI_API_KEY is not configured in environment variables');
+}
+
+const genAI = new GoogleGenerativeAI(GEMINI_API_KEY || '');
 const model = genAI.getGenerativeModel({ model: 'gemini-pro' });
 
 // Structured prompt for generating reel content
@@ -56,6 +61,10 @@ export async function generateReelContent({
   numberOfClips = 5,
 }: GenerateReelContentRequest): Promise<GenerateReelContentResponse> {
   try {
+    if (!GEMINI_API_KEY) {
+      throw new Error('GOOGLE_GEMINI_API_KEY is not configured. Please set up your environment variables.');
+    }
+
     // Construct the complete prompt
     const fullPrompt = `${REEL_CONTENT_PROMPT}
 
@@ -73,18 +82,26 @@ Generate the reel content plan:`;
     // Parse the JSON response
     try {
       const content = JSON.parse(text) as ReelContent;
+      
+      // Validate the response structure
+      if (!content.theme || !Array.isArray(content.clips) || content.clips.length === 0) {
+        throw new Error('Invalid response structure from Gemini API');
+      }
+
       return { content };
     } catch (parseError) {
       console.error('Failed to parse Gemini response:', parseError);
+      console.error('Raw response:', text);
       return {
-        error: 'Failed to parse AI response',
+        error: 'Failed to parse AI response. Please try again.',
         content: createDefaultReelContent(prompt, theme, numberOfClips),
       };
     }
   } catch (error) {
     console.error('Gemini API error:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Failed to generate reel content';
     return {
-      error: 'Failed to generate reel content',
+      error: errorMessage,
       content: createDefaultReelContent(prompt, theme, numberOfClips),
     };
   }
@@ -116,6 +133,7 @@ function createDefaultReelContent(
       },
     ],
     bgMusicKeywords: ['upbeat', 'energetic', 'background'],
+    bgMusicCategory: 'upbeat',
     style: {
       tone: 'casual',
       pacing: 'medium',
