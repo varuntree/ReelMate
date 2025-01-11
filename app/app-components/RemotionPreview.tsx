@@ -4,82 +4,25 @@ import { useEffect, useMemo, useState } from 'react';
 import { Player } from '@remotion/player';
 import { type ReelState } from '../page';
 import ReelComposition from './remotion/ReelComposition';
+import { VIDEO_CONFIG, loadAudioDurations, calculateDurationInFrames } from './remotion/utils';
 
 interface RemotionPreviewProps {
   reelState: ReelState;
 }
 
-// Mobile preview dimensions (iPhone 12 Pro)
-const PREVIEW_WIDTH = 390;
-const PREVIEW_HEIGHT = 844;
-
-// Actual video dimensions (1080p vertical)
-const VIDEO_WIDTH = 1080;
-const VIDEO_HEIGHT = 1920;
-
-// Minimum spacing between clips (2 seconds)
-const MIN_CLIP_SPACING = 60; // 2 seconds at 30fps
-const TRANSITION_DURATION = 30; // 1 second transition
-
 export default function RemotionPreview({ reelState }: RemotionPreviewProps) {
-  const fps = 30;
   const [audioDurations, setAudioDurations] = useState<{ [key: number]: number }>({});
 
   // Load audio durations when clips change
   useEffect(() => {
-    const loadAudioDurations = async () => {
-      const durations: { [key: number]: number } = {};
-      
-      for (let i = 0; i < reelState.clips.length; i++) {
-        const clip = reelState.clips[i];
-        if (clip.voiceAudio) {
-          try {
-            const audio = document.createElement('audio');
-            audio.src = clip.voiceAudio;
-            await new Promise((resolve) => {
-              audio.addEventListener('loadedmetadata', () => {
-                durations[i] = audio.duration;
-                resolve(null);
-              });
-              audio.addEventListener('error', () => {
-                console.error('Error loading audio for clip', i);
-                resolve(null);
-              });
-            });
-          } catch (error) {
-            console.error('Error loading audio duration for clip', i, error);
-          }
-        }
-      }
-      
-      setAudioDurations(durations);
-    };
-
-    loadAudioDurations();
+    loadAudioDurations(reelState.clips).then(setAudioDurations);
   }, [reelState.clips]);
 
   // Calculate total duration based on audio durations
-  const durationInFrames = useMemo(() => {
-    const totalDuration = reelState.clips.reduce((total, clip, index) => {
-      let clipDuration;
-      if (clip.voiceAudio && audioDurations[index]) {
-        // Use voice audio duration plus minimum spacing
-        clipDuration = Math.round(audioDurations[index] * fps) + MIN_CLIP_SPACING;
-      } else {
-        // Use default duration of 5 seconds plus minimum spacing for clips without audio
-        clipDuration = 5 * fps + MIN_CLIP_SPACING;
-      }
-      
-      // For all clips except the first one, subtract transition overlap
-      if (index > 0) {
-        return total + clipDuration - TRANSITION_DURATION;
-      }
-      return total + clipDuration;
-    }, 0);
-    
-    // Return at least 3 seconds duration
-    return Math.max(totalDuration, 3 * fps);
-  }, [reelState.clips, audioDurations, fps]);
+  const durationInFrames = useMemo(() => 
+    calculateDurationInFrames(reelState.clips, audioDurations),
+    [reelState.clips, audioDurations]
+  );
 
   // Don't render player until we have at least one clip with video
   const hasVideoContent = reelState.clips.some(clip => clip.video);
@@ -96,7 +39,7 @@ export default function RemotionPreview({ reelState }: RemotionPreviewProps) {
       {/* Preview Container */}
       <div className="mx-auto w-full max-w-[390px]">
         {/* Phone Frame */}
-        <div className="relative mx-auto overflow-hidden rounded-[3rem] border-[14px] border-gray-900 bg-black shadow-xl">
+        <div className="relative mx-auto overflow-hidden rounded-[3rem] border-[14px] border-gray-900 bg-white shadow-xl">
           {/* Notch */}
           <div className="absolute left-1/2 top-0 z-10 h-6 w-40 -translate-x-1/2 rounded-b-3xl bg-black"></div>
           
@@ -106,9 +49,9 @@ export default function RemotionPreview({ reelState }: RemotionPreviewProps) {
               <Player
                 component={ReelComposition}
                 durationInFrames={durationInFrames}
-                fps={fps}
-                compositionWidth={VIDEO_WIDTH}
-                compositionHeight={VIDEO_HEIGHT}
+                fps={VIDEO_CONFIG.fps}
+                compositionWidth={VIDEO_CONFIG.width}
+                compositionHeight={VIDEO_CONFIG.height}
                 style={{
                   width: '100%',
                   height: '100%',

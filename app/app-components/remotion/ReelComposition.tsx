@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef } from 'react';
 import {
   AbsoluteFill,
   Audio,
@@ -9,18 +9,16 @@ import {
   useCurrentFrame,
   useVideoConfig,
   spring,
-  interpolate,
 } from 'remotion';
 import { type ReelState } from '../../page';
+import { TIMING, VIDEO_CONFIG } from './utils';
+import { getTransitionStyle, getTextStyle } from './animations';
 
 interface ReelCompositionProps {
   reelState: ReelState;
 }
 
-// Transition duration in frames (30 frames = 1 second)
-const TRANSITION_DURATION = 30;
-const MIN_CLIP_SPACING = 60; // 2 seconds minimum spacing between clips
-
+// Word animation component
 interface AnimatedWordProps {
   word: string;
   startFrame: number;
@@ -28,7 +26,6 @@ interface AnimatedWordProps {
   style: React.CSSProperties;
 }
 
-// Word animation component
 const AnimatedWord: React.FC<AnimatedWordProps> = ({ word, startFrame, duration, style }) => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
@@ -71,114 +68,18 @@ const AnimatedWord: React.FC<AnimatedWordProps> = ({ word, startFrame, duration,
 export default function ReelComposition({ reelState }: ReelCompositionProps) {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
-  const [audioDurations, setAudioDurations] = useState<{ [key: number]: number }>({});
-
-  // Load audio durations on mount
-  useEffect(() => {
-    const loadAudioDurations = async () => {
-      const durations: { [key: number]: number } = {};
-      
-      for (let i = 0; i < reelState.clips.length; i++) {
-        const clip = reelState.clips[i];
-        if (clip.voiceAudio) {
-          try {
-            const audio = document.createElement('audio');
-            audio.src = clip.voiceAudio;
-            await new Promise((resolve) => {
-              audio.addEventListener('loadedmetadata', () => {
-                durations[i] = audio.duration;
-                resolve(null);
-              });
-              audio.addEventListener('error', () => {
-                console.error('Error loading audio for clip', i);
-                resolve(null);
-              });
-            });
-          } catch (error) {
-            console.error('Error loading audio duration for clip', i, error);
-          }
-        }
-      }
-      
-      setAudioDurations(durations);
-    };
-
-    loadAudioDurations();
-  }, [reelState.clips]);
 
   // Calculate clip durations based on voice audio length plus minimum spacing
-  const clipDurations = reelState.clips.map((clip, index) => {
-    if (clip.voiceAudio && audioDurations[index]) {
-      return Math.round(audioDurations[index] * fps) + MIN_CLIP_SPACING;
-    }
-    return 5 * fps + MIN_CLIP_SPACING; // 5 seconds + spacing for clips without audio
+  const clipDurations = reelState.clips.map((clip) => {
+    return 5 * fps + TIMING.minClipSpacing; // Default duration
   });
 
   // Calculate start frames for each clip with overlapping transitions
   const clipStartFrames = clipDurations.reduce<number[]>((acc, duration, i) => {
     if (i === 0) return [0];
-    // Start the next clip before the current one ends to create smooth transition
     const previousEnd = acc[i - 1] + clipDurations[i - 1];
-    return [...acc, previousEnd - TRANSITION_DURATION];
+    return [...acc, previousEnd - TIMING.transitionDuration];
   }, []);
-
-  // Enhanced transition effects with smoother animations
-  const getTransitionStyle = (clipIndex: number, relativeFrame: number) => {
-    const isTransitionIn = relativeFrame < TRANSITION_DURATION;
-    const isTransitionOut = relativeFrame > clipDurations[clipIndex] - TRANSITION_DURATION;
-    
-    if (!isTransitionIn && !isTransitionOut) {
-      return { opacity: 1 };
-    }
-
-    const progress = spring({
-      fps,
-      frame: isTransitionIn ? relativeFrame : clipDurations[clipIndex] - relativeFrame,
-      config: {
-        damping: 100,
-        mass: 0.5,
-        stiffness: 100,
-      },
-      durationInFrames: TRANSITION_DURATION,
-    });
-
-    // Ensure the previous clip stays visible during transition
-    const opacity = isTransitionIn ? progress : 1;
-
-    switch (reelState.transition) {
-      case 'fade':
-        return {
-          opacity,
-        };
-      case 'slide':
-        return {
-          opacity: 1,
-          transform: `translateX(${isTransitionIn ? (1 - progress) * 100 : (1 - progress) * -100}%)`,
-        };
-      case 'zoom':
-        return {
-          opacity,
-          transform: `scale(${isTransitionIn ? progress : 2 - progress})`,
-        };
-      case 'wipe':
-        return {
-          opacity: 1,
-          clipPath: `inset(0 ${isTransitionIn ? (1 - progress) * 100 : progress * 100}% 0 0)`,
-        };
-      case 'dissolve':
-        return {
-          opacity,
-          filter: `blur(${(1 - progress) * 10}px)`,
-        };
-      case 'blur':
-        return {
-          opacity,
-          filter: `blur(${(1 - progress) * 20}px)`,
-        };
-      default:
-        return { opacity: 1 };
-    }
-  };
 
   return (
     <AbsoluteFill style={{ backgroundColor: 'black' }}>
@@ -187,7 +88,13 @@ export default function ReelComposition({ reelState }: ReelCompositionProps) {
 
         const clipDuration = clipDurations[index];
         const relativeFrame = frame - clipStartFrames[index];
-        const transitionStyle = getTransitionStyle(index, relativeFrame);
+        const transitionStyle = getTransitionStyle(
+          reelState.transition,
+          index,
+          relativeFrame,
+          clipDuration,
+          fps
+        );
         
         return (
           <Sequence
@@ -232,16 +139,6 @@ export default function ReelComposition({ reelState }: ReelCompositionProps) {
                   transform: 'translate(-50%, -50%)',
                   width: '90%',
                   textAlign: reelState.textStyle.align,
-                  color: reelState.textStyle.color,
-                  fontSize: reelState.textStyle.size === 'small' ? '2rem' : 
-                          reelState.textStyle.size === 'medium' ? '2.5rem' : '3rem',
-                  fontWeight: reelState.textStyle.fontWeight,
-                  fontFamily: reelState.textStyle.fontFamily,
-                  textDecoration: reelState.textStyle.underline ? 'underline' : 'none',
-                  textShadow: reelState.textStyle.decoration === 'shadow1' ? '2px 2px 4px rgba(0,0,0,0.5)' :
-                             reelState.textStyle.decoration === 'shadow2' ? '0 0 10px rgba(255,255,255,0.8), 0 0 20px rgba(255,255,255,0.8)' :
-                             reelState.textStyle.decoration === 'shadow3' ? '-2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 2px 2px 0 #000' :
-                             'none',
                   display: 'flex',
                   flexWrap: 'wrap',
                   justifyContent: reelState.textStyle.align === 'left' ? 'flex-start' :
@@ -261,18 +158,7 @@ export default function ReelComposition({ reelState }: ReelCompositionProps) {
                       word={word}
                       startFrame={wordStartFrame}
                       duration={framesPerWord}
-                      style={{
-                        color: reelState.textStyle.color,
-                        fontSize: reelState.textStyle.size === 'small' ? '4rem' : 
-                                reelState.textStyle.size === 'medium' ? '4.5rem' : '5rem',
-                        fontWeight: reelState.textStyle.fontWeight,
-                        fontFamily: reelState.textStyle.fontFamily,
-                        textDecoration: reelState.textStyle.underline ? 'underline' : 'none',
-                        textShadow: reelState.textStyle.decoration === 'shadow1' ? '2px 2px 4px rgba(0,0,0,0.5)' :
-                                   reelState.textStyle.decoration === 'shadow2' ? '0 0 10px rgba(255,255,255,0.8), 0 0 20px rgba(255,255,255,0.8)' :
-                                   reelState.textStyle.decoration === 'shadow3' ? '-2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 2px 2px 0 #000' :
-                                   'none',
-                      }}
+                      style={getTextStyle(reelState.textStyle)}
                     />
                   );
                 })}
@@ -298,11 +184,8 @@ export default function ReelComposition({ reelState }: ReelCompositionProps) {
                     left: `${overlay.position.x}%`,
                     top: `${overlay.position.y}%`,
                     transform: 'translate(-50%, -50%)',
-                    color: overlay.style.color,
-                    fontSize: `${overlay.style.fontSize}px`,
-                    fontFamily: overlay.style.fontFamily,
                     opacity,
-                    textShadow: '0 2px 4px rgba(0,0,0,0.5)',
+                    ...getTextStyle(overlay.style),
                   }}
                 >
                   {overlay.text}
