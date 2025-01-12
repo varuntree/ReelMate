@@ -25,9 +25,11 @@ export default function Navbar() {
 
           {/* Sign In Button */}
           <div>
-            <RainbowButton>
-              Sign In
-            </RainbowButton>
+            <Link href="/sign-in">
+              <RainbowButton>
+                Sign In
+              </RainbowButton>
+            </Link>
           </div>
         </div>
       </div>
