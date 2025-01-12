@@ -1,15 +1,60 @@
 "use client";
-import React from "react";
+import React, { useState } from "react";
 import { Label } from "../ui/label";
 import { Input } from "../ui/input";
 import { cn } from "@/lib/utils";
 import { IconBrandGoogle } from "@tabler/icons-react";
+import { signInWithGoogle, signInWithEmail } from "@/app/api/Firebase/authService";
+import { useRouter } from "next/navigation";
 
 export function SignupFormDemo() {
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const router = useRouter();
+
+  const handleEmailSignIn = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    console.log("Form submitted");
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const { user, error } = await signInWithEmail(email, password);
+      if (error) {
+        setError(error);
+        return;
+      }
+      if (user) {
+        router.push("/"); // Redirect to home page after successful sign in
+      }
+    } catch (err) {
+      setError("An unexpected error occurred");
+    } finally {
+      setIsLoading(false);
+    }
   };
+
+  const handleGoogleSignIn = async () => {
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const { user, error } = await signInWithGoogle();
+      if (error) {
+        setError(error);
+        return;
+      }
+      if (user) {
+        router.push("/"); // Redirect to home page after successful sign in
+      }
+    } catch (err) {
+      setError("An unexpected error occurred");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <div
       className={cn(
@@ -22,14 +67,23 @@ export function SignupFormDemo() {
         Sign in to continue to your account
       </p>
 
-      <form className="my-8" onSubmit={handleSubmit}>
+      {error && (
+        <div className="mt-4 p-2 text-sm text-red-500 bg-red-50 rounded">
+          {error}
+        </div>
+      )}
+
+      <form className="my-8" onSubmit={handleEmailSignIn}>
         <LabelInputContainer className="mb-4">
           <Label htmlFor="email">Email Address</Label>
           <Input
             id="email"
             placeholder="you@example.com"
             type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
             className="bg-background"
+            required
           />
         </LabelInputContainer>
         <LabelInputContainer className="mb-8">
@@ -38,15 +92,19 @@ export function SignupFormDemo() {
             id="password"
             placeholder="••••••••"
             type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
             className="bg-background"
+            required
           />
         </LabelInputContainer>
 
         <button
           className="bg-primary hover:bg-secondary text-accent w-full rounded-md h-10 font-medium"
           type="submit"
+          disabled={isLoading}
         >
-          Sign in &rarr;
+          {isLoading ? "Signing in..." : "Sign in →"}
         </button>
 
         <div className="bg-gradient-to-r from-transparent via-neutral-300 dark:via-neutral-700 to-transparent my-8 h-[1px] w-full" />
@@ -54,7 +112,9 @@ export function SignupFormDemo() {
         <div className="flex flex-col space-y-4">
           <button
             className="flex space-x-2 items-center justify-center px-4 w-full text-text rounded-md h-10 font-medium shadow-input bg-accent"
-            type="submit"
+            type="button"
+            onClick={handleGoogleSignIn}
+            disabled={isLoading}
           >
             <IconBrandGoogle className="h-4 w-4" />
             <span className="text-sm">Continue with Google</span>
