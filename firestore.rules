@@ -1,0 +1,24 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Match any document in the users collection
+    match /users/{userId} {
+      // Allow read/write only if the user is authenticated and the userId matches their auth ID
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+      
+      // Additional validation rules for specific fields
+      match /reelState {
+        allow write: if request.resource.data.keys().hasAll(['prompt', 'clips', 'textStyle'])
+                    && request.resource.data.clips is list;
+      }
+      
+      // Validate generations and worker nodes updates
+      allow update: if request.resource.data.diff(resource.data).affectedKeys()
+                      .hasAny(['generationsLeft', 'workerNodesLeft'])
+                   && request.resource.data.generationsLeft is number
+                   && request.resource.data.workerNodesLeft is number
+                   && request.resource.data.generationsLeft >= 0
+                   && request.resource.data.workerNodesLeft >= 0;
+    }
+  }
+} 
