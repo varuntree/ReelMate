@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Inter, Roboto, Poppins, Open_Sans, Montserrat, Lato, Source_Sans_3, Oswald } from "next/font/google";
 import "./globals.css";
+import { Toaster } from 'sonner';
 
 const inter = Inter({
   subsets: ['latin'],
@@ -62,6 +63,7 @@ export default function RootLayout({
         className={`${inter.variable} ${roboto.variable} ${poppins.variable} ${openSans.variable} ${montserrat.variable} ${lato.variable} ${sourceSans.variable} ${oswald.variable}`}
       >
         {children}
+        <Toaster richColors position="top-center" />
       </body>
     </html>
   );

@@ -12,6 +12,29 @@ service cloud.firestore {
                     && request.resource.data.clips is list;
       }
       
+      // Rules for reels subcollection
+      match /reels/{reelId} {
+        // Allow read operations if authenticated and owns the document
+        allow read: if request.auth != null && request.auth.uid == userId;
+        
+        // Allow create if authenticated, owns the document, and data is valid
+        allow create: if request.auth != null 
+                     && request.auth.uid == userId
+                     && request.resource.data.keys().hasAll(['id', 'userId', 'createdAt', 'updatedAt', 'status', 'reelState'])
+                     && request.resource.data.userId == userId
+                     && request.resource.data.status in ['saved', 'scheduled', 'approval', 'published']
+                     && request.resource.data.createdAt is number
+                     && request.resource.data.updatedAt is number;
+                     
+        // Allow update if authenticated, owns the document, and only updating allowed fields
+        allow update: if request.auth != null 
+                     && request.auth.uid == userId
+                     && request.resource.data.userId == resource.data.userId
+                     && request.resource.data.status in ['saved', 'scheduled', 'approval', 'published']
+                     && request.resource.data.updatedAt is number
+                     && request.resource.data.updatedAt > resource.data.updatedAt;
+      }
+      
       // Validate generations and worker nodes updates
       allow update: if request.resource.data.diff(resource.data).affectedKeys()
                       .hasAny(['generationsLeft', 'workerNodesLeft'])

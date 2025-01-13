@@ -1,6 +1,7 @@
-import { getFirestore, doc, setDoc, getDoc, updateDoc, arrayUnion } from 'firebase/firestore';
+import { getFirestore, doc, setDoc, getDoc, updateDoc, arrayUnion, collection, addDoc, getDocs, deleteDoc, query, where } from 'firebase/firestore';
 import { app } from './firebaseConfig';
 import type { ReelState } from '@/app/(sidebar)/dashboard/page';
+import type { SavedReel, ReelStatus } from '@/app/types/api';
 
 const db = getFirestore(app);
 
@@ -115,6 +116,64 @@ export const getUserData = async (userId: string): Promise<UserData | null> => {
     return null;
   } catch (error) {
     console.error('Error getting user data:', error);
+    throw error;
+  }
+};
+
+// Save a reel to the user's reels collection
+export const saveReel = async (userId: string, reelState: ReelState, status: ReelStatus = 'saved'): Promise<string> => {
+  try {
+    const reelsCollection = collection(db, 'users', userId, 'reels');
+    const timestamp = Date.now();
+    
+    const reelData: SavedReel = {
+      id: '', // Will be set after addDoc
+      userId,
+      createdAt: timestamp,
+      updatedAt: timestamp,
+      status,
+      reelState,
+    };
+
+    const docRef = await addDoc(reelsCollection, reelData);
+    
+    // Update the document with its ID
+    await updateDoc(docRef, {
+      id: docRef.id
+    });
+
+    return docRef.id;
+  } catch (error) {
+    console.error('Error saving reel:', error);
+    throw error;
+  }
+};
+
+// Fetch all reels for a user
+export const getUserReels = async (userId: string): Promise<SavedReel[]> => {
+  try {
+    const reelsCollection = collection(db, 'users', userId, 'reels');
+    const querySnapshot = await getDocs(reelsCollection);
+    
+    const reels: SavedReel[] = [];
+    querySnapshot.forEach((doc) => {
+      reels.push(doc.data() as SavedReel);
+    });
+    
+    return reels.sort((a, b) => b.createdAt - a.createdAt); // Sort by newest first
+  } catch (error) {
+    console.error('Error fetching reels:', error);
+    throw error;
+  }
+};
+
+// Delete a reel
+export const deleteReel = async (userId: string, reelId: string): Promise<void> => {
+  try {
+    const reelRef = doc(db, 'users', userId, 'reels', reelId);
+    await deleteDoc(reelRef);
+  } catch (error) {
+    console.error('Error deleting reel:', error);
     throw error;
   }
 }; 

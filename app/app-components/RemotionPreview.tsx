@@ -7,6 +7,9 @@ import ReelComposition from './remotion/ReelComposition';
 import { VIDEO_CONFIG, loadAudioDurations, calculateDurationInFrames } from './remotion/utils';
 import { type TextClip } from '../types/api';
 import { PlayPauseButton } from './remotion/PlayPauseButton';
+import { saveReel } from '@/app/api/Firebase/firestoreService';
+import { useAuth } from '@/app/hooks/useAuth';
+import { toast } from 'sonner';
 
 interface RemotionPreviewProps {
   reelState: ReelState;
@@ -16,6 +19,8 @@ interface RemotionPreviewProps {
 export default function RemotionPreview({ reelState, setReelState }: RemotionPreviewProps) {
   const [audioDurations, setAudioDurations] = useState<{ [key: number]: number }>({});
   const playerRef = useRef<PlayerRef>(null);
+  const { user, loading: authLoading } = useAuth();
+  const [isSaving, setIsSaving] = useState(false);
 
   // Load audio durations when clips change
   useEffect(() => {
@@ -40,12 +45,58 @@ export default function RemotionPreview({ reelState, setReelState }: RemotionPre
     }));
   };
 
+  const handleSaveReel = async () => {
+    console.log('Save button clicked');
+    console.log('User:', user);
+    
+    if (!user) {
+      toast.error('Please sign in to save reels');
+      return;
+    }
+
+    if (!reelState.clips.length) {
+      toast.error('Cannot save an empty reel');
+      return;
+    }
+
+    try {
+      setIsSaving(true);
+      console.log('Saving reel for user:', user.uid);
+      console.log('Reel state:', reelState);
+      
+      const reelId = await saveReel(user.uid, reelState);
+      console.log('Reel saved with ID:', reelId);
+      
+      toast.success('Reel saved successfully!');
+      
+      // Clear both state and localStorage
+      localStorage.removeItem('reelState');
+      setReelState(prev => ({
+        ...prev,
+        prompt: '',
+        selectedVideo: null,
+        script: '',
+        clips: [],
+        bgMusic: null,
+      }));
+    } catch (error) {
+      console.error('Error saving reel:', error);
+      toast.error(error instanceof Error ? error.message : 'Failed to save reel');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   return (
     <div className="flex h-full w-full flex-col">
       <div className="mb-4 flex items-center justify-between">
         <h2 className="text-xl font-bold text-text">Preview</h2>
-        <button className="rounded bg-primary px-4 py-2 text-accent rounded-lg hover:bg-secondary">
-          Save to My Reels
+        <button 
+          className="rounded bg-primary px-4 py-2 text-accent rounded-lg hover:bg-secondary disabled:opacity-50 disabled:cursor-not-allowed"
+          onClick={handleSaveReel}
+          disabled={isSaving || authLoading}
+        >
+          {isSaving ? 'Saving...' : authLoading ? 'Loading...' : 'Save to My Reels'}
         </button>
       </div>
 
