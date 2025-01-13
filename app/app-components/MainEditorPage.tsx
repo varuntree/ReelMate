@@ -1,7 +1,7 @@
 // Main editor page component that contains the editing sections and video preview
 'use client';
 
-import { type ReelState } from '../page';
+import { type ReelState } from '@/app/(sidebar)/dashboard/page';
 import { TabsContent } from "@/components/ui/tabs";
 import { SimpleTabsForNavigation } from '@/components/ui/simple-tabs-for-navigation';
 import ScriptAndVideo from './editor-sections/ScriptAndVideo';

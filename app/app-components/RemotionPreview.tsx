@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState, useRef } from 'react';
 import { Player, PlayerRef } from '@remotion/player';
-import { type ReelState } from '../page'; 
+import { type ReelState } from '@/app/(sidebar)/dashboard/page'; 
 import ReelComposition from './remotion/ReelComposition';
 import { VIDEO_CONFIG, loadAudioDurations, calculateDurationInFrames } from './remotion/utils';
 import { type TextClip } from '../types/api';
@@ -44,8 +44,8 @@ export default function RemotionPreview({ reelState, setReelState }: RemotionPre
     <div className="flex h-full w-full flex-col">
       <div className="mb-4 flex items-center justify-between">
         <h2 className="text-xl font-bold text-text">Preview</h2>
-        <button className="rounded bg-primary px-4 py-2 text-accent hover:bg-secondary">
-          Export Reel
+        <button className="rounded bg-primary px-4 py-2 text-accent rounded-lg hover:bg-secondary">
+          Save to My Reels
         </button>
       </div>
 

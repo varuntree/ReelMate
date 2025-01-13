@@ -2,7 +2,8 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { type ReelState } from '../page';
+import { ReelState } from '../(sidebar)/dashboard/page';
+
 
 interface VideoPreviewProps {
   reelState: ReelState;

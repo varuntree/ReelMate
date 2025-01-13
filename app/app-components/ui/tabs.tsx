@@ -21,13 +21,13 @@ export const Tabs = ({
 
   return (
     <div className={cn("w-full", className)}>
-      <div className="flex w-full items-center gap-2 overflow-x-auto border-b border-secondary/20 px-4">
+      <div className="flex w-full items-center justify-start border-b border-secondary/20 px-4">
         {tabs.map((tab) => (
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
             className={cn(
-              "relative px-4 py-3 text-sm font-medium text-text/60 transition-colors hover:text-text",
+              "relative px-4 py-3 text-sm font-medium text-text/60 transition-colors hover:text-text whitespace-nowrap",
               activeTab === tab.id && "text-text"
             )}
           >
