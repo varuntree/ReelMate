@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState, useRef } from 'react';
 import { Player, PlayerRef } from '@remotion/player';
-import { type ReelState } from '../page';
+import { type ReelState } from '../page'; 
 import ReelComposition from './remotion/ReelComposition';
 import { VIDEO_CONFIG, loadAudioDurations, calculateDurationInFrames } from './remotion/utils';
 import { type TextClip } from '../types/api';

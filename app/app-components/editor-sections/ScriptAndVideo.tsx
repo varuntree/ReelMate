@@ -3,7 +3,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { type ReelState } from '../../page';
-import { type GenerateReelContentResponse, type ReelTheme, type TextClip } from "@/app/types/api";
+import { type ReelTheme, type TextClip } from "@/app/types/api";
 import { type PexelsVideo } from '@/app/api/services/pexelsService';
 import { FaVideo, FaSearch, FaPlay, FaPause, FaTrash, FaPlus } from 'react-icons/fa';
 import { Expandable } from '@/components/ui/expandable';
