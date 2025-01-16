@@ -1,3 +1,5 @@
+import { type ReelState } from '@/app/(sidebar)/dashboard/page';
+
 // Types for API responses and requests
 
 export type ReelTheme =
@@ -13,6 +15,17 @@ export type ReelTheme =
   | 'timeLapse'
   | 'memes'
   | 'custom';
+
+export type ReelStatus = 'saved' | 'scheduled' | 'approval' | 'published';
+
+export interface SavedReel {
+  id: string;
+  userId: string;
+  createdAt: number;
+  updatedAt: number;
+  status: ReelStatus;
+  reelState: ReelState;
+}
 
 export type BgMusicCategory =
   | 'ambient'

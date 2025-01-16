@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState, useCallback, useMemo } from 'react';
 import {
   AbsoluteFill,
   Audio,
@@ -9,8 +9,9 @@ import {
   useCurrentFrame,
   useVideoConfig,
   spring,
+  useCurrentScale,
 } from 'remotion';
-import { type ReelState } from '../../page';
+import { type ReelState } from '@/app/(sidebar)/dashboard/page'; 
 import { TIMING, VIDEO_CONFIG } from './utils';
 import { getTransitionStyle, getTextStyle } from './animations';
 import { DraggableText } from './Draggable';
@@ -26,15 +27,14 @@ interface ReelCompositionProps {
 interface AnimatedWordProps {
   word: string;
   startFrame: number;
-  duration: number;
   style: React.CSSProperties;
 }
 
-const AnimatedWord: React.FC<AnimatedWordProps> = ({ word, startFrame, duration, style }) => {
+const AnimatedWord: React.FC<AnimatedWordProps> = ({ word, startFrame, style }) => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
   
-  const opacity = spring({
+  const progress = spring({
     fps,
     frame: frame - startFrame,
     config: {
@@ -43,16 +43,8 @@ const AnimatedWord: React.FC<AnimatedWordProps> = ({ word, startFrame, duration,
     durationInFrames: 8,
   });
 
-  const scale = spring({
-    fps,
-    frame: frame - startFrame,
-    config: {
-      damping: 200,
-    },
-    from: 1.2,
-    to: 1,
-    durationInFrames: 8,
-  });
+  const opacity = progress;
+  const scale = 1 + (1 - progress) * 0.2;
 
   return (
     <span

@@ -23,9 +23,15 @@ export default {
         primary: '#0000a7',
         secondary: '#1468cf',
         accent: '#ffffff',
+        color1: "hsl(var(--color-1))",
+        color2 : "hsl(var(--color-2))",
+        color3: "hsl(var(--color-3))",
+        color4: "hsl(var(--color-4))",
+        color5: "hsl(var(--color-5))",
       },
       animation: {
         aurora: "aurora 60s linear infinite",
+        rainbow: "rainbow var(--speed, 2s) infinite linear",
       },
       keyframes: {
         aurora: {
@@ -36,6 +42,13 @@ export default {
             backgroundPosition: "350% 50%, 350% 50%",
           },
         },
+        rainbow: {
+          "0%": { "background-position": "0%" },
+          "100%": { "background-position": "200%" },
+        },
+      },
+      boxShadow: {
+        input: `0px 2px 3px -1px rgba(0,0,0,0.1), 0px 1px 0px 0px rgba(25,28,33,0.02), 0px 0px 0px 1px rgba(25,28,33,0.08)`,
       },
     },
   },

@@ -1,10 +1,47 @@
 'use client';
 
 import React, { useCallback, useMemo, useState } from 'react';
-import { useCurrentScale, useVideoConfig } from 'remotion';
+import { useCurrentScale, useVideoConfig, useCurrentFrame, spring } from 'remotion';
 import { type TextClip } from '../../types/api';
-import { type ReelState } from '../../page';
+import { type ReelState } from '@/app/(sidebar)/dashboard/page';
 import { getTextStyle } from './animations';
+
+interface AnimatedWordProps {
+  word: string;
+  startFrame: number;
+  style: React.CSSProperties;
+}
+
+const AnimatedWord: React.FC<AnimatedWordProps> = ({ word, startFrame, style }) => {
+  const frame = useCurrentFrame();
+  const { fps } = useVideoConfig();
+  
+  const progress = spring({
+    fps,
+    frame: frame - startFrame,
+    config: {
+      damping: 200,
+    },
+    durationInFrames: 8,
+  });
+
+  const opacity = progress;
+  const scale = 1 + (1 - progress) * 0.2;
+
+  return (
+    <span
+      style={{
+        ...style,
+        display: 'inline-block',
+        opacity,
+        transform: `scale(${scale})`,
+        margin: '0 4px',
+      }}
+    >
+      {word}
+    </span>
+  );
+};
 
 interface DraggableTextProps {
   clipIndex: number;
@@ -23,7 +60,7 @@ export const DraggableText: React.FC<DraggableTextProps> = ({
   const scaledBorder = Math.ceil(2 / scale);
   const [hovered, setHovered] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
-  const { width: videoWidth, height: videoHeight } = useVideoConfig();
+  const { width: videoWidth, height: videoHeight, fps } = useVideoConfig();
 
   const onMouseEnter = useCallback(() => setHovered(true), []);
   const onMouseLeave = useCallback(() => setHovered(false), []);
@@ -95,6 +132,11 @@ export const DraggableText: React.FC<DraggableTextProps> = ({
     [clipIndex, clip.textStyle, scale, updateClip, videoWidth, videoHeight]
   );
 
+  // Calculate words per frame based on clip duration
+  const words = clip.text.split(' ');
+  const clipDuration = 5 * fps; // Default duration from parent component
+  const framesPerWord = Math.floor(clipDuration / words.length);
+
   return (
     <div
       onPointerDown={startDragging}
@@ -117,10 +159,13 @@ export const DraggableText: React.FC<DraggableTextProps> = ({
           gap: '8px',
         }}
       >
-        {clip.text.split(' ').map((word, wordIndex) => (
-          <span key={wordIndex} style={{ margin: '0 4px' }}>
-            {word}
-          </span>
+        {words.map((word, wordIndex) => (
+          <AnimatedWord
+            key={wordIndex}
+            word={word}
+            startFrame={wordIndex * framesPerWord}
+            style={getTextStyle(reelState.textStyle)}
+          />
         ))}
       </div>
     </div>
